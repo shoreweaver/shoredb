@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin &amp; Introspection · ShoreDB Docs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B1220'/%3E%3Cpath d='M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3' stroke='%232FB6A6' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="var(--ink)"/>
+      <path d="M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--tide)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M4 24c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--shore)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+    </svg>
+    <span>ShoreDB</span>
+    <span class="brand-sub">docs</span>
+  </a>
+
+  <div class="search-wrap">
+    <input id="searchInput" type="search" placeholder="Search docs…" aria-label="Search documentation" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="searchResults" class="search-results" hidden></div>
+  </div>
+
+  <a class="topbar-link" href="https://github.com/shoreweaver/shoredb" target="_blank" rel="noopener">GitHub ↗</a>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar" aria-label="Sections">
+    <div class="nav-section"><h3>Getting Started</h3><ul><li><a href="index.html">Introduction</a></li><li><a href="quickstart.html">Quick Start</a></li><li><a href="configuration.html">Configuration</a></li></ul></div><div class="nav-section"><h3>Commands</h3><ul><li><a href="commands-strings.html">Strings</a></li><li><a href="commands-lists.html">Lists</a></li><li><a href="commands-sets.html">Sets</a></li><li><a href="commands-hashes.html">Hashes</a></li><li><a href="commands-expiration.html">Expiration</a></li><li><a href="commands-pubsub.html">Pub/Sub</a></li><li><a href="commands-admin.html" class="active" aria-current="page">Admin &amp; Introspection</a></li><li><a href="commands-persistence.html">Persistence</a></li></ul></div><div class="nav-section"><h3>Guides</h3><ul><li><a href="architecture.html">Architecture</a></li><li><a href="embedding.html">Embedding ShoreDB</a></li><li><a href="testing.html">Testing</a></li></ul></div><div class="nav-section"><h3>Reference</h3><ul><li><a href="limitations.html">Known Limitations</a></li></ul></div>
+  </nav>
+
+  <main id="main" class="content">
+    <article class="prose">
+      <h1 id="admin-introspection-commands"><a class="anchor" href="#admin-introspection-commands">#</a>Admin &amp; Introspection Commands</h1>
+<p>Housekeeping, discovery, and connection-level commands. Backed by <code>pkg/commands/admin_commands.go</code> and <code>pkg/server/tcp.go</code>.</p>
+<h2 id="keys"><a class="anchor" href="#keys">#</a><code>KEYS</code></h2>
+<pre><code>KEYS pattern</code></pre>
+<p>Returns every key (across all types) matching a glob-style <code>pattern</code>, e.g. <code>KEYS user:*</code>. Sweeps expired keys first, so results never include stale entries.</p>
+<h2 id="scan"><a class="anchor" href="#scan">#</a><code>SCAN</code></h2>
+<pre><code>SCAN cursor [MATCH pattern]</code></pre>
+<p>A simplified, single-pass cursor: the cursor argument is validated but otherwise ignored, and ShoreDB always returns cursor <code>0</code> with the full matching result set in one reply. This is fine for small or medium datasets but is <strong>not</strong> cursor-safe for large ones — see <a href="limitations.html">Known Limitations</a>.</p>
+<h2 id="dbsize"><a class="anchor" href="#dbsize">#</a><code>DBSIZE</code></h2>
+<pre><code>DBSIZE</code></pre>
+<p>Returns the total number of keys in the currently-selected logical database, across all types, after sweeping expired keys.</p>
+<h2 id="hello"><a class="anchor" href="#hello">#</a><code>HELLO</code></h2>
+<pre><code>HELLO [protover]</code></pre>
+<p>Negotiates the protocol version. ShoreDB only implements RESP2: calling <code>HELLO 3</code> returns <code>NOPROTO unsupported protocol version</code> rather than switching protocols, so RESP3-aware clients fall back to RESP2. Called with no argument (or <code>2</code>), it returns server info (name, version, mode, role) in the standard array-of-pairs shape.</p>
+<h2 id="command"><a class="anchor" href="#command">#</a><code>COMMAND</code></h2>
+<pre><code>COMMAND [COUNT | LIST | INFO [name ...] | DOCS [name ...] | GETKEYS cmd [arg ...]]</code></pre>
+<p>Introspection for clients that query command metadata on connect (arity, flags, key positions) to validate their own calls before sending them.</p>
+<ul><li><strong><code>COMMAND</code></strong> (no subcommand) or <strong><code>COMMAND INFO</code></strong> with no names — full metadata for every supported command</li><li><strong><code>COMMAND COUNT</code></strong> — the number of supported commands</li><li><strong><code>COMMAND LIST</code></strong> — just the command names</li><li><strong><code>COMMAND INFO name [name ...]</code></strong> — metadata for specific commands (nil for unknown ones)</li><li><strong><code>COMMAND DOCS [name ...]</code></strong> — acknowledges known commands with an empty per-command doc map; use <code>COMMAND INFO</code> for arity/flags, since full docs (summary, since, argument descriptions) aren't modeled</li><li><strong><code>COMMAND GETKEYS cmd [arg ...]</code></strong> — returns which of the given arguments are key names, based on the command's known key-position spec</li></ul>
+<h2 id="auth"><a class="anchor" href="#auth">#</a><code>AUTH</code></h2>
+<pre><code>AUTH password</code></pre>
+<p>Authenticates the connection against <code>requirepass</code> (see <a href="configuration.html#requirepass">Configuration</a>). Every other command is rejected with <code>NOAUTH Authentication required</code> until this succeeds, if <code>requirepass</code> is set. If no <code>requirepass</code> is configured, <code>AUTH</code> itself replies with an error, since there's nothing to authenticate against.</p>
+<h2 id="select"><a class="anchor" href="#select">#</a><code>SELECT</code></h2>
+<pre><code>SELECT index</code></pre>
+<p>Switches which of the 16 logical databases (<code>0</code>–<code>15</code>) the <strong>current connection</strong> operates against. This is per-connection state — one client's <code>SELECT</code> never affects any other client. Returns <code>ERR DB index is out of range</code> for anything outside <code>0</code>–<code>15</code>.</p>
+    </article>
+    <div class="pager"><a class="pager-link pager-prev" href="commands-pubsub.html"><span>Previous</span><strong>Pub/Sub</strong></a><a class="pager-link pager-next" href="commands-persistence.html"><span>Next</span><strong>Persistence</strong></a></div>
+    <footer class="page-footer">
+      <p>ShoreDB is a learning project — see <a href="limitations.html">Known Limitations</a>. Licensed AGPLv3.</p>
+    </footer>
+  </main>
+
+  <aside class="toc-rail">
+    <nav class="page-toc"><h4>On this page</h4><ul><li class="toc-level-2"><a href="#keys"><code>KEYS</code></a></li><li class="toc-level-2"><a href="#scan"><code>SCAN</code></a></li><li class="toc-level-2"><a href="#dbsize"><code>DBSIZE</code></a></li><li class="toc-level-2"><a href="#hello"><code>HELLO</code></a></li><li class="toc-level-2"><a href="#command"><code>COMMAND</code></a></li><li class="toc-level-2"><a href="#auth"><code>AUTH</code></a></li><li class="toc-level-2"><a href="#select"><code>SELECT</code></a></li></ul></nav>
+  </aside>
+</div>
+
+<div class="sidebar-scrim" id="sidebarScrim"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

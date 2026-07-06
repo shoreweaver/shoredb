@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configuration · ShoreDB Docs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B1220'/%3E%3Cpath d='M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3' stroke='%232FB6A6' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="var(--ink)"/>
+      <path d="M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--tide)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M4 24c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--shore)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+    </svg>
+    <span>ShoreDB</span>
+    <span class="brand-sub">docs</span>
+  </a>
+
+  <div class="search-wrap">
+    <input id="searchInput" type="search" placeholder="Search docs…" aria-label="Search documentation" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="searchResults" class="search-results" hidden></div>
+  </div>
+
+  <a class="topbar-link" href="https://github.com/shoreweaver/shoredb" target="_blank" rel="noopener">GitHub ↗</a>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar" aria-label="Sections">
+    <div class="nav-section"><h3>Getting Started</h3><ul><li><a href="index.html">Introduction</a></li><li><a href="quickstart.html">Quick Start</a></li><li><a href="configuration.html" class="active" aria-current="page">Configuration</a></li></ul></div><div class="nav-section"><h3>Commands</h3><ul><li><a href="commands-strings.html">Strings</a></li><li><a href="commands-lists.html">Lists</a></li><li><a href="commands-sets.html">Sets</a></li><li><a href="commands-hashes.html">Hashes</a></li><li><a href="commands-expiration.html">Expiration</a></li><li><a href="commands-pubsub.html">Pub/Sub</a></li><li><a href="commands-admin.html">Admin &amp; Introspection</a></li><li><a href="commands-persistence.html">Persistence</a></li></ul></div><div class="nav-section"><h3>Guides</h3><ul><li><a href="architecture.html">Architecture</a></li><li><a href="embedding.html">Embedding ShoreDB</a></li><li><a href="testing.html">Testing</a></li></ul></div><div class="nav-section"><h3>Reference</h3><ul><li><a href="limitations.html">Known Limitations</a></li></ul></div>
+  </nav>
+
+  <main id="main" class="content">
+    <article class="prose">
+      <h1 id="configuration"><a class="anchor" href="#configuration">#</a>Configuration</h1>
+<p><code>redis.config</code> is a flat <code>key value</code> file, parsed line by line. Lines starting with <code>#</code> are comments and blank lines are ignored.</p>
+<pre><code># dir &lt;path&gt;              - where dump.rdb / appendonly.aof are stored
+# dbfilename &lt;name&gt;        - RDB snapshot filename
+# save &lt;secs&gt; &lt;changes&gt;    - snapshot trigger, repeatable
+# appendonly yes|no        - enable AOF
+# appendfilename &lt;name&gt;
+# appendfsync always|everysec|no
+# requirepass &lt;password&gt;   - require AUTH before other commands
+
+dir data
+dbfilename dump.rdb
+save 900 1
+save 300 10
+appendonly yes
+appendfilename appendonly.aof
+appendfsync everysec</code></pre>
+<h2 id="keys"><a class="anchor" href="#keys">#</a>Keys</h2>
+<div class="table-wrap"><table><thead><tr><th>Key</th><th>Meaning</th><th>Default</th></tr></thead><tbody><tr><td><code>dir &lt;path&gt;</code></td><td>Where the RDB/AOF files live</td><td><code>.</code></td></tr><tr><td><code>dbfilename &lt;name&gt;</code></td><td>RDB snapshot filename</td><td><code>dump.rdb</code></td></tr><tr><td><code>save &lt;secs&gt; &lt;changes&gt;</code></td><td>Snapshot trigger; repeatable, e.g. <code>save 900 1</code></td><td>none</td></tr><tr><td>`appendonly yes\</td><td>no`</td><td>Enable the append-only file</td><td><code>no</code></td></tr><tr><td><code>appendfilename &lt;name&gt;</code></td><td>AOF filename</td><td><code>appendonly.aof</code></td></tr><tr><td>`appendfsync always\</td><td>everysec\</td><td>no`</td><td>How often the AOF is <code>fsync</code>'d</td><td><code>everysec</code></td></tr><tr><td><code>requirepass &lt;password&gt;</code></td><td>Require <code>AUTH</code> before any other command</td><td>unset</td></tr></tbody></table></div>
+<p>If the file passed to <code>-config</code> / <code>SHOREDB_CONFIG</code> doesn't exist, ShoreDB logs a warning and falls back to the defaults above rather than failing to start.</p>
+<h2 id="which-persistence-mode-loads-on-startup"><a class="anchor" href="#which-persistence-mode-loads-on-startup">#</a>Which persistence mode loads on startup</h2>
+<ul><li>If <code>appendonly yes</code>: the <strong>AOF is the source of truth</strong>. It takes precedence over any RDB snapshot on disk.</li><li>If <code>appendonly no</code>: the <strong>RDB snapshot is loaded</strong> instead.</li></ul>
+<p>Both modes persist and replay all 16 logical databases, tagging entries with <code>SELECT</code> markers the same way real Redis's AOF does, so data ends up back in the database it came from.</p>
+<h2 id="save-rdb-snapshot-triggers"><a class="anchor" href="#save-rdb-snapshot-triggers">#</a><code>save</code> — RDB snapshot triggers</h2>
+<p>Each <code>save &lt;secs&gt; &lt;changes&gt;</code> line defines one trigger: if at least <code>&lt;changes&gt;</code> keys have changed and at least <code>&lt;secs&gt;</code> seconds have elapsed since the last snapshot, ShoreDB saves automatically. Multiple <code>save</code> lines are checked independently — any one of them firing triggers a save. With the example config above:</p>
+<ul><li><code>save 900 1</code> — save if at least 1 key changed in the last 900 seconds</li><li><code>save 300 10</code> — save if at least 10 keys changed in the last 300 seconds</li></ul>
+<p>An explicit <code>SAVE</code> or <code>BGSAVE</code> command always saves immediately regardless of these triggers. See <a href="commands-persistence.html">Persistence commands</a>.</p>
+<h2 id="appendfsync-modes"><a class="anchor" href="#appendfsync-modes">#</a><code>appendfsync</code> modes</h2>
+<div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td><code>always</code></td><td>fsync roughly every 100ms</td></tr><tr><td><code>everysec</code></td><td>fsync roughly once a second (default)</td></tr><tr><td><code>no</code></td><td>never fsync from a background timer — relies on the OS to flush eventually</td></tr></tbody></table></div>
+<h2 id="requirepass"><a class="anchor" href="#requirepass">#</a><code>requirepass</code></h2>
+<p>When set, every connection must send <code>AUTH &lt;password&gt;</code> before any other command is accepted (the server always allows <code>AUTH</code> itself through). This is a single shared password per server — there is no per-user ACL model, and it is not scoped per logical database. See <a href="commands-admin.html#auth"><code>AUTH</code></a> in the admin command reference.</p>
+    </article>
+    <div class="pager"><a class="pager-link pager-prev" href="quickstart.html"><span>Previous</span><strong>Quick Start</strong></a><a class="pager-link pager-next" href="commands-strings.html"><span>Next</span><strong>Strings</strong></a></div>
+    <footer class="page-footer">
+      <p>ShoreDB is a learning project — see <a href="limitations.html">Known Limitations</a>. Licensed AGPLv3.</p>
+    </footer>
+  </main>
+
+  <aside class="toc-rail">
+    <nav class="page-toc"><h4>On this page</h4><ul><li class="toc-level-2"><a href="#keys">Keys</a></li><li class="toc-level-2"><a href="#which-persistence-mode-loads-on-startup">Which persistence mode loads on startup</a></li><li class="toc-level-2"><a href="#save-rdb-snapshot-triggers"><code>save</code> — RDB snapshot triggers</a></li><li class="toc-level-2"><a href="#appendfsync-modes"><code>appendfsync</code> modes</a></li><li class="toc-level-2"><a href="#requirepass"><code>requirepass</code></a></li></ul></nav>
+  </aside>
+</div>
+
+<div class="sidebar-scrim" id="sidebarScrim"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

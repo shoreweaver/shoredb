@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Known Limitations · ShoreDB Docs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B1220'/%3E%3Cpath d='M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3' stroke='%232FB6A6' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="var(--ink)"/>
+      <path d="M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--tide)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M4 24c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--shore)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+    </svg>
+    <span>ShoreDB</span>
+    <span class="brand-sub">docs</span>
+  </a>
+
+  <div class="search-wrap">
+    <input id="searchInput" type="search" placeholder="Search docs…" aria-label="Search documentation" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="searchResults" class="search-results" hidden></div>
+  </div>
+
+  <a class="topbar-link" href="https://github.com/shoreweaver/shoredb" target="_blank" rel="noopener">GitHub ↗</a>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar" aria-label="Sections">
+    <div class="nav-section"><h3>Getting Started</h3><ul><li><a href="index.html">Introduction</a></li><li><a href="quickstart.html">Quick Start</a></li><li><a href="configuration.html">Configuration</a></li></ul></div><div class="nav-section"><h3>Commands</h3><ul><li><a href="commands-strings.html">Strings</a></li><li><a href="commands-lists.html">Lists</a></li><li><a href="commands-sets.html">Sets</a></li><li><a href="commands-hashes.html">Hashes</a></li><li><a href="commands-expiration.html">Expiration</a></li><li><a href="commands-pubsub.html">Pub/Sub</a></li><li><a href="commands-admin.html">Admin &amp; Introspection</a></li><li><a href="commands-persistence.html">Persistence</a></li></ul></div><div class="nav-section"><h3>Guides</h3><ul><li><a href="architecture.html">Architecture</a></li><li><a href="embedding.html">Embedding ShoreDB</a></li><li><a href="testing.html">Testing</a></li></ul></div><div class="nav-section"><h3>Reference</h3><ul><li><a href="limitations.html" class="active" aria-current="page">Known Limitations</a></li></ul></div>
+  </nav>
+
+  <main id="main" class="content">
+    <article class="prose">
+      <h1 id="known-limitations"><a class="anchor" href="#known-limitations">#</a>Known Limitations</h1>
+<p>ShoreDB is a learning / side-project implementation, not a drop-in Redis replacement. Read this before relying on it for anything production-critical.</p>
+<h2 id="access-control"><a class="anchor" href="#access-control">#</a>Access control</h2>
+<p><code>requirepass</code> gates commands per-connection via <code>AUTH</code>. There is no ACL or per-user model, and the password is not scoped per logical database — one password guards the entire server.</p>
+<h2 id="scan-is-single-pass"><a class="anchor" href="#scan-is-single-pass">#</a><code>SCAN</code> is single-pass</h2>
+<p><code>SCAN</code> always returns cursor <code>0</code> — a real cursor-based incremental scan isn't implemented. This is fine for small or medium datasets, but it is <strong>not</strong> cursor-safe for huge ones: a single <code>SCAN</code> call walks (and returns) the entire matching key set at once. See <a href="commands-admin.html"><code>SCAN</code></a>.</p>
+<h2 id="no-resp3"><a class="anchor" href="#no-resp3">#</a>No RESP3</h2>
+<p><code>HELLO 3</code> isn't implemented — the server replies <code>NOPROTO unsupported protocol version</code>, so RESP3-aware clients fall back to RESP2 automatically. Everything else works over RESP2 as normal.</p>
+<h2 id="ttls-dont-survive-a-restart"><a class="anchor" href="#ttls-dont-survive-a-restart">#</a>TTLs don't survive a restart</h2>
+<p>TTLs are <strong>not</strong> persisted in the RDB snapshot, and <code>EXPIRE</code>/<code>PEXPIRE</code>/<code>PERSIST</code> are <strong>not</strong> written to the AOF. This is deliberate: replaying an absolute wall-clock deadline from a relative TTL recorded before a restart would either expire keys immediately or keep them alive far longer than intended, depending on how long the server was down. If you depend on TTLs surviving a restart, re-apply them explicitly after loading.</p>
+<h2 id="command-metadata-is-hand-maintained"><a class="anchor" href="#command-metadata-is-hand-maintained">#</a><code>COMMAND</code> metadata is hand-maintained</h2>
+<p><code>COMMAND</code> / <code>COMMAND DOCS</code> return a hand-maintained table of arity, flags, and key positions for the commands ShoreDB actually supports — not the full introspection detail real Redis provides (argument-level docs, since-version, grouping, etc.). Clients that only need arity/flags to validate their own calls work fine; clients expecting rich <code>COMMAND DOCS</code> output will see an empty per-command doc map.</p>
+<h2 id="no-aof-for-embedded-clients"><a class="anchor" href="#no-aof-for-embedded-clients">#</a>No AOF for embedded clients</h2>
+<p><code>pkg/shoredis</code> wires up RDB persistence but not AOF. An embedded client has no long-running server loop to drive an AOF fsync ticker, so call <code>client.Save()</code> (or <code>client.Close()</code> on the way out) explicitly when you want a snapshot. See <a href="embedding.html">Embedding ShoreDB</a>.</p>
+<h2 id="not-covered-at-all"><a class="anchor" href="#not-covered-at-all">#</a>Not covered at all</h2>
+<ul><li>Replication, clustering, or any multi-node topology</li><li>Redis Streams, Sorted Sets, HyperLogLog, Bitmaps, or Geo commands</li><li>Lua scripting (<code>EVAL</code>/<code>EVALSHA</code>), transactions (<code>MULTI</code>/<code>EXEC</code>), or keyspace notifications</li><li>TLS on the TCP listener</li></ul>
+    </article>
+    <div class="pager"><a class="pager-link pager-prev" href="testing.html"><span>Previous</span><strong>Testing</strong></a><span></span></div>
+    <footer class="page-footer">
+      <p>ShoreDB is a learning project — see <a href="limitations.html">Known Limitations</a>. Licensed AGPLv3.</p>
+    </footer>
+  </main>
+
+  <aside class="toc-rail">
+    <nav class="page-toc"><h4>On this page</h4><ul><li class="toc-level-2"><a href="#access-control">Access control</a></li><li class="toc-level-2"><a href="#scan-is-single-pass"><code>SCAN</code> is single-pass</a></li><li class="toc-level-2"><a href="#no-resp3">No RESP3</a></li><li class="toc-level-2"><a href="#ttls-dont-survive-a-restart">TTLs don't survive a restart</a></li><li class="toc-level-2"><a href="#command-metadata-is-hand-maintained"><code>COMMAND</code> metadata is hand-maintained</a></li><li class="toc-level-2"><a href="#no-aof-for-embedded-clients">No AOF for embedded clients</a></li><li class="toc-level-2"><a href="#not-covered-at-all">Not covered at all</a></li></ul></nav>
+  </aside>
+</div>
+
+<div class="sidebar-scrim" id="sidebarScrim"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hashes · ShoreDB Docs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B1220'/%3E%3Cpath d='M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3' stroke='%232FB6A6' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="var(--ink)"/>
+      <path d="M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--tide)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M4 24c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--shore)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+    </svg>
+    <span>ShoreDB</span>
+    <span class="brand-sub">docs</span>
+  </a>
+
+  <div class="search-wrap">
+    <input id="searchInput" type="search" placeholder="Search docs…" aria-label="Search documentation" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="searchResults" class="search-results" hidden></div>
+  </div>
+
+  <a class="topbar-link" href="https://github.com/shoreweaver/shoredb" target="_blank" rel="noopener">GitHub ↗</a>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar" aria-label="Sections">
+    <div class="nav-section"><h3>Getting Started</h3><ul><li><a href="index.html">Introduction</a></li><li><a href="quickstart.html">Quick Start</a></li><li><a href="configuration.html">Configuration</a></li></ul></div><div class="nav-section"><h3>Commands</h3><ul><li><a href="commands-strings.html">Strings</a></li><li><a href="commands-lists.html">Lists</a></li><li><a href="commands-sets.html">Sets</a></li><li><a href="commands-hashes.html" class="active" aria-current="page">Hashes</a></li><li><a href="commands-expiration.html">Expiration</a></li><li><a href="commands-pubsub.html">Pub/Sub</a></li><li><a href="commands-admin.html">Admin &amp; Introspection</a></li><li><a href="commands-persistence.html">Persistence</a></li></ul></div><div class="nav-section"><h3>Guides</h3><ul><li><a href="architecture.html">Architecture</a></li><li><a href="embedding.html">Embedding ShoreDB</a></li><li><a href="testing.html">Testing</a></li></ul></div><div class="nav-section"><h3>Reference</h3><ul><li><a href="limitations.html">Known Limitations</a></li></ul></div>
+  </nav>
+
+  <main id="main" class="content">
+    <article class="prose">
+      <h1 id="hash-commands"><a class="anchor" href="#hash-commands">#</a>Hash Commands</h1>
+<p>Commands for field/value maps stored under a single key. Backed by <code>pkg/commands/hash_commands.go</code> and <code>pkg/datastruct</code>.</p>
+<h2 id="hset"><a class="anchor" href="#hset">#</a><code>HSET</code></h2>
+<pre><code>HSET key field value</code></pre>
+<p>Sets <code>field</code> in the hash at <code>key</code> to <code>value</code>, creating the hash if needed. Returns <code>1</code> if the field is new, <code>0</code> if it already existed and was overwritten.</p>
+<h2 id="hget"><a class="anchor" href="#hget">#</a><code>HGET</code></h2>
+<pre><code>HGET key field</code></pre>
+<p>Returns the value of <code>field</code>, or nil if the field or the key doesn't exist.</p>
+<h2 id="hdel"><a class="anchor" href="#hdel">#</a><code>HDEL</code></h2>
+<pre><code>HDEL key field [field ...]</code></pre>
+<p>Removes one or more fields from the hash. Returns the number actually removed. The key is deleted entirely once the hash becomes empty.</p>
+<h2 id="hexists"><a class="anchor" href="#hexists">#</a><code>HEXISTS</code></h2>
+<pre><code>HEXISTS key field</code></pre>
+<p>Returns <code>1</code> if <code>field</code> exists in the hash, <code>0</code> otherwise.</p>
+<h2 id="hgetall"><a class="anchor" href="#hgetall">#</a><code>HGETALL</code></h2>
+<pre><code>HGETALL key</code></pre>
+<p>Returns all fields and values as a flat array (<code>field1 value1 field2 value2 ...</code>), or an empty array if the key doesn't exist.</p>
+<h2 id="hkeys"><a class="anchor" href="#hkeys">#</a><code>HKEYS</code></h2>
+<pre><code>HKEYS key</code></pre>
+<p>Returns all field names in the hash, or an empty array if the key doesn't exist.</p>
+<h2 id="hvals"><a class="anchor" href="#hvals">#</a><code>HVALS</code></h2>
+<pre><code>HVALS key</code></pre>
+<p>Returns all values in the hash, or an empty array if the key doesn't exist.</p>
+<h2 id="hlen"><a class="anchor" href="#hlen">#</a><code>HLEN</code></h2>
+<pre><code>HLEN key</code></pre>
+<p>Returns the number of fields in the hash, or <code>0</code> if it doesn't exist.</p>
+<h2 id="hmset"><a class="anchor" href="#hmset">#</a><code>HMSET</code></h2>
+<pre><code>HMSET key field value [field value ...]</code></pre>
+<p>Sets multiple field/value pairs in one call, creating the hash if needed. Always replies <code>OK</code>.</p>
+<h2 id="hmget"><a class="anchor" href="#hmget">#</a><code>HMGET</code></h2>
+<pre><code>HMGET key field [field ...]</code></pre>
+<p>Returns the values for the given fields in the order requested. Fields that don't exist (or a wholly missing key) come back as nil in their position.</p>
+<h2 id="hincrby"><a class="anchor" href="#hincrby">#</a><code>HINCRBY</code></h2>
+<pre><code>HINCRBY key field increment</code></pre>
+<p>Increments the integer value of <code>field</code> by <code>increment</code>, creating the hash and/or field (starting from <code>0</code>) if needed. Errors if the existing field value isn't a valid integer.</p>
+    </article>
+    <div class="pager"><a class="pager-link pager-prev" href="commands-sets.html"><span>Previous</span><strong>Sets</strong></a><a class="pager-link pager-next" href="commands-expiration.html"><span>Next</span><strong>Expiration</strong></a></div>
+    <footer class="page-footer">
+      <p>ShoreDB is a learning project — see <a href="limitations.html">Known Limitations</a>. Licensed AGPLv3.</p>
+    </footer>
+  </main>
+
+  <aside class="toc-rail">
+    <nav class="page-toc"><h4>On this page</h4><ul><li class="toc-level-2"><a href="#hset"><code>HSET</code></a></li><li class="toc-level-2"><a href="#hget"><code>HGET</code></a></li><li class="toc-level-2"><a href="#hdel"><code>HDEL</code></a></li><li class="toc-level-2"><a href="#hexists"><code>HEXISTS</code></a></li><li class="toc-level-2"><a href="#hgetall"><code>HGETALL</code></a></li><li class="toc-level-2"><a href="#hkeys"><code>HKEYS</code></a></li><li class="toc-level-2"><a href="#hvals"><code>HVALS</code></a></li><li class="toc-level-2"><a href="#hlen"><code>HLEN</code></a></li><li class="toc-level-2"><a href="#hmset"><code>HMSET</code></a></li><li class="toc-level-2"><a href="#hmget"><code>HMGET</code></a></li><li class="toc-level-2"><a href="#hincrby"><code>HINCRBY</code></a></li></ul></nav>
+  </aside>
+</div>
+
+<div class="sidebar-scrim" id="sidebarScrim"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

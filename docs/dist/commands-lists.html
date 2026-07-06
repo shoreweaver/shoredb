@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lists · ShoreDB Docs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B1220'/%3E%3Cpath d='M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3' stroke='%232FB6A6' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="var(--ink)"/>
+      <path d="M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--tide)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M4 24c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--shore)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+    </svg>
+    <span>ShoreDB</span>
+    <span class="brand-sub">docs</span>
+  </a>
+
+  <div class="search-wrap">
+    <input id="searchInput" type="search" placeholder="Search docs…" aria-label="Search documentation" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="searchResults" class="search-results" hidden></div>
+  </div>
+
+  <a class="topbar-link" href="https://github.com/shoreweaver/shoredb" target="_blank" rel="noopener">GitHub ↗</a>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar" aria-label="Sections">
+    <div class="nav-section"><h3>Getting Started</h3><ul><li><a href="index.html">Introduction</a></li><li><a href="quickstart.html">Quick Start</a></li><li><a href="configuration.html">Configuration</a></li></ul></div><div class="nav-section"><h3>Commands</h3><ul><li><a href="commands-strings.html">Strings</a></li><li><a href="commands-lists.html" class="active" aria-current="page">Lists</a></li><li><a href="commands-sets.html">Sets</a></li><li><a href="commands-hashes.html">Hashes</a></li><li><a href="commands-expiration.html">Expiration</a></li><li><a href="commands-pubsub.html">Pub/Sub</a></li><li><a href="commands-admin.html">Admin &amp; Introspection</a></li><li><a href="commands-persistence.html">Persistence</a></li></ul></div><div class="nav-section"><h3>Guides</h3><ul><li><a href="architecture.html">Architecture</a></li><li><a href="embedding.html">Embedding ShoreDB</a></li><li><a href="testing.html">Testing</a></li></ul></div><div class="nav-section"><h3>Reference</h3><ul><li><a href="limitations.html">Known Limitations</a></li></ul></div>
+  </nav>
+
+  <main id="main" class="content">
+    <article class="prose">
+      <h1 id="list-commands"><a class="anchor" href="#list-commands">#</a>List Commands</h1>
+<p>Commands for ordered, string-valued lists. Backed by <code>pkg/commands/list_commands.go</code> and <code>pkg/datastruct</code>.</p>
+<h2 id="lpush"><a class="anchor" href="#lpush">#</a><code>LPUSH</code></h2>
+<pre><code>LPUSH key value [value ...]</code></pre>
+<p>Pushes one or more values onto the head (left side) of the list at <code>key</code>, creating the list if needed. Returns the resulting length. Wakes any client blocked in <code>BLPOP</code>/<code>BRPOP</code> on this key.</p>
+<h2 id="rpush"><a class="anchor" href="#rpush">#</a><code>RPUSH</code></h2>
+<pre><code>RPUSH key value [value ...]</code></pre>
+<p>Pushes one or more values onto the tail (right side) of the list at <code>key</code>, creating the list if needed. Returns the resulting length. Wakes any client blocked in <code>BLPOP</code>/<code>BRPOP</code> on this key.</p>
+<h2 id="lpop"><a class="anchor" href="#lpop">#</a><code>LPOP</code></h2>
+<pre><code>LPOP key</code></pre>
+<p>Removes and returns the first element of the list, or nil if the list doesn't exist or is empty. The key is deleted entirely once its last element is popped.</p>
+<h2 id="rpop"><a class="anchor" href="#rpop">#</a><code>RPOP</code></h2>
+<pre><code>RPOP key</code></pre>
+<p>Removes and returns the last element of the list, with the same empty/missing behavior as <code>LPOP</code>.</p>
+<h2 id="blpop"><a class="anchor" href="#blpop">#</a><code>BLPOP</code></h2>
+<pre><code>BLPOP key [key ...] timeout</code></pre>
+<p>Blocking left-pop across one or more keys. Checks each key in order and pops from the first one that has data; if none do, it waits until a push arrives on any of them or <code>timeout</code> seconds elapse (<code>0</code> waits indefinitely). Returns a two-element array of <code>[key, value]</code>, or nil on timeout.</p>
+<blockquote><p>Blocked clients are woken by a condition variable that every <code>LPUSH</code>/<code>RPUSH</code> broadcasts on, so a pop is noticed within about a millisecond of the corresponding push — not on a polling interval.</p></blockquote>
+<h2 id="brpop"><a class="anchor" href="#brpop">#</a><code>BRPOP</code></h2>
+<pre><code>BRPOP key [key ...] timeout</code></pre>
+<p>The same as <code>BLPOP</code>, but pops from the tail of whichever key has data first.</p>
+<h2 id="lrange"><a class="anchor" href="#lrange">#</a><code>LRANGE</code></h2>
+<pre><code>LRANGE key start stop</code></pre>
+<p>Returns the elements between <code>start</code> and <code>stop</code>, inclusive. Negative indices count from the end of the list (<code>-1</code> is the last element). Returns an empty array if the key doesn't exist.</p>
+<h2 id="llen"><a class="anchor" href="#llen">#</a><code>LLEN</code></h2>
+<pre><code>LLEN key</code></pre>
+<p>Returns the length of the list, or <code>0</code> if it doesn't exist.</p>
+<h2 id="lindex"><a class="anchor" href="#lindex">#</a><code>LINDEX</code></h2>
+<pre><code>LINDEX key index</code></pre>
+<p>Returns the element at <code>index</code> (negative indices count from the end), or nil if the index is out of range or the key doesn't exist.</p>
+<h2 id="lset"><a class="anchor" href="#lset">#</a><code>LSET</code></h2>
+<pre><code>LSET key index value</code></pre>
+<p>Overwrites the element at <code>index</code> with <code>value</code>. Replies <code>ERR no such key</code> if the list doesn't exist, or <code>ERR index out of range</code> if the index is invalid.</p>
+<h2 id="lrem"><a class="anchor" href="#lrem">#</a><code>LREM</code></h2>
+<pre><code>LREM key count value</code></pre>
+<p>Removes occurrences of <code>value</code> from the list, direction and quantity controlled by <code>count</code>:</p>
+<ul><li><code>count &gt; 0</code> — remove up to <code>count</code> occurrences, searching head to tail</li><li><code>count &lt; 0</code> — remove up to <code>abs(count)</code> occurrences, searching tail to head</li><li><code>count = 0</code> — remove all occurrences</li></ul>
+<p>Returns the number of elements removed. The key is deleted entirely if the list becomes empty.</p>
+    </article>
+    <div class="pager"><a class="pager-link pager-prev" href="commands-strings.html"><span>Previous</span><strong>Strings</strong></a><a class="pager-link pager-next" href="commands-sets.html"><span>Next</span><strong>Sets</strong></a></div>
+    <footer class="page-footer">
+      <p>ShoreDB is a learning project — see <a href="limitations.html">Known Limitations</a>. Licensed AGPLv3.</p>
+    </footer>
+  </main>
+
+  <aside class="toc-rail">
+    <nav class="page-toc"><h4>On this page</h4><ul><li class="toc-level-2"><a href="#lpush"><code>LPUSH</code></a></li><li class="toc-level-2"><a href="#rpush"><code>RPUSH</code></a></li><li class="toc-level-2"><a href="#lpop"><code>LPOP</code></a></li><li class="toc-level-2"><a href="#rpop"><code>RPOP</code></a></li><li class="toc-level-2"><a href="#blpop"><code>BLPOP</code></a></li><li class="toc-level-2"><a href="#brpop"><code>BRPOP</code></a></li><li class="toc-level-2"><a href="#lrange"><code>LRANGE</code></a></li><li class="toc-level-2"><a href="#llen"><code>LLEN</code></a></li><li class="toc-level-2"><a href="#lindex"><code>LINDEX</code></a></li><li class="toc-level-2"><a href="#lset"><code>LSET</code></a></li><li class="toc-level-2"><a href="#lrem"><code>LREM</code></a></li></ul></nav>
+  </aside>
+</div>
+
+<div class="sidebar-scrim" id="sidebarScrim"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

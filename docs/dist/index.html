@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Introduction · ShoreDB Docs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B1220'/%3E%3Cpath d='M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3' stroke='%232FB6A6' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="is-home">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="var(--ink)"/>
+      <path d="M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--tide)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M4 24c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--shore)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+    </svg>
+    <span>ShoreDB</span>
+    <span class="brand-sub">docs</span>
+  </a>
+
+  <div class="search-wrap">
+    <input id="searchInput" type="search" placeholder="Search docs…" aria-label="Search documentation" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="searchResults" class="search-results" hidden></div>
+  </div>
+
+  <a class="topbar-link" href="https://github.com/shoreweaver/shoredb" target="_blank" rel="noopener">GitHub ↗</a>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar" aria-label="Sections">
+    <div class="nav-section"><h3>Getting Started</h3><ul><li><a href="index.html" class="active" aria-current="page">Introduction</a></li><li><a href="quickstart.html">Quick Start</a></li><li><a href="configuration.html">Configuration</a></li></ul></div><div class="nav-section"><h3>Commands</h3><ul><li><a href="commands-strings.html">Strings</a></li><li><a href="commands-lists.html">Lists</a></li><li><a href="commands-sets.html">Sets</a></li><li><a href="commands-hashes.html">Hashes</a></li><li><a href="commands-expiration.html">Expiration</a></li><li><a href="commands-pubsub.html">Pub/Sub</a></li><li><a href="commands-admin.html">Admin &amp; Introspection</a></li><li><a href="commands-persistence.html">Persistence</a></li></ul></div><div class="nav-section"><h3>Guides</h3><ul><li><a href="architecture.html">Architecture</a></li><li><a href="embedding.html">Embedding ShoreDB</a></li><li><a href="testing.html">Testing</a></li></ul></div><div class="nav-section"><h3>Reference</h3><ul><li><a href="limitations.html">Known Limitations</a></li></ul></div>
+  </nav>
+
+  <main id="main" class="content">
+    <article class="prose">
+      <h1 id="shoredb"><a class="anchor" href="#shoredb">#</a>ShoreDB</h1>
+<p>ShoreDB is a minimal, dependency-free <strong>Redis-protocol</strong> server written in Go. Run it as a standalone binary, a Docker container, or an embedded library inside another Go program — the same command set works everywhere.</p>
+<p>It speaks real RESP2 over TCP, so any standard Redis client (<code>redis-cli</code>, <code>go-redis</code>, <code>ioredis</code>, <code>redis-py</code>, ...) can talk to it without modification. Optional AOF and RDB-style persistence let data survive a restart, and 16 SELECT-able logical databases behave just like stock Redis.</p>
+<blockquote><p>This is a learning / side-project implementation, not a drop-in Redis replacement. See <a href="limitations.html">Known Limitations</a> before relying on it for anything production-critical.</p></blockquote>
+<h2 id="features"><a class="anchor" href="#features">#</a>Features</h2>
+<ul><li>Real RESP2 wire protocol — works with off-the-shelf Redis clients</li><li>Strings, Lists, Sets, Hashes, key expiration, Pub/Sub</li><li>16 logical databases (<code>SELECT 0</code>–<code>15</code>), each with its own lock so a snapshot or heavy workload on one database doesn't stall the others</li><li>Optional AOF (append-only file) and RDB-style snapshotting, independently toggleable, both correctly scoped per logical database</li><li>Event-driven <code>BLPOP</code> / <code>BRPOP</code> — blocked clients wake the instant a matching <code>LPUSH</code> / <code>RPUSH</code> happens, not on a polling timer</li><li><code>AUTH</code> / <code>requirepass</code> support</li><li>Usable as a Go library two ways: the zero-network-layer data structures directly (<code>pkg/commands</code>), or the higher-level embeddable client (<code>pkg/shoredis</code>) with typed methods, <code>Select</code>, and optional RDB persistence</li><li>No third-party dependencies — standard library only</li></ul>
+<h2 id="where-to-go-next"><a class="anchor" href="#where-to-go-next">#</a>Where to go next</h2>
+<ul><li><a href="quickstart.html">Quick Start</a> — install, run, and issue your first commands</li><li><a href="configuration.html">Configuration</a> — every <code>redis.config</code> key explained</li><li><a href="commands-strings.html">Commands</a> — the full reference, grouped by data type</li><li><a href="architecture.html">Architecture</a> — how the packages fit together</li><li><a href="embedding.html">Embedding ShoreDB</a> — use it as an in-process Go library</li><li><a href="limitations.html">Known Limitations</a> — what ShoreDB intentionally doesn't do</li></ul>
+<h2 id="supported-commands-at-a-glance"><a class="anchor" href="#supported-commands-at-a-glance">#</a>Supported commands at a glance</h2>
+<div class="table-wrap"><table><thead><tr><th>Category</th><th>Commands</th></tr></thead><tbody><tr><td>Strings</td><td><code>GET</code> <code>SET</code> <code>DEL</code> <code>EXISTS</code> <code>MSET</code> <code>MGET</code> <code>TYPE</code> <code>INCR</code> <code>DECR</code> <code>INCRBY</code> <code>DECRBY</code></td></tr><tr><td>Lists</td><td><code>LPUSH</code> <code>RPUSH</code> <code>LPOP</code> <code>RPOP</code> <code>BLPOP</code> <code>BRPOP</code> <code>LRANGE</code> <code>LLEN</code> <code>LINDEX</code> <code>LSET</code> <code>LREM</code></td></tr><tr><td>Sets</td><td><code>SADD</code> <code>SREM</code> <code>SISMEMBER</code> <code>SMEMBERS</code> <code>SCARD</code> <code>SPOP</code> <code>SINTER</code> <code>SUNION</code> <code>SDIFF</code></td></tr><tr><td>Hashes</td><td><code>HSET</code> <code>HGET</code> <code>HDEL</code> <code>HEXISTS</code> <code>HGETALL</code> <code>HKEYS</code> <code>HVALS</code> <code>HLEN</code> <code>HMSET</code> <code>HMGET</code> <code>HINCRBY</code></td></tr><tr><td>Expiration</td><td><code>EXPIRE</code> <code>PEXPIRE</code> <code>TTL</code> <code>PTTL</code> <code>PERSIST</code></td></tr><tr><td>Pub/Sub</td><td><code>PUBLISH</code> <code>SUBSCRIBE</code> <code>UNSUBSCRIBE</code></td></tr><tr><td>Databases</td><td><code>SELECT</code> (0–15)</td></tr><tr><td>Admin</td><td><code>KEYS</code> <code>SCAN</code> <code>DBSIZE</code> <code>HELLO</code> <code>COMMAND</code> <code>AUTH</code></td></tr><tr><td>Persistence</td><td><code>SAVE</code> <code>BGSAVE</code> <code>LASTSAVE</code></td></tr></tbody></table></div>
+    </article>
+    <div class="pager"><span></span><a class="pager-link pager-next" href="quickstart.html"><span>Next</span><strong>Quick Start</strong></a></div>
+    <footer class="page-footer">
+      <p>ShoreDB is a learning project — see <a href="limitations.html">Known Limitations</a>. Licensed AGPLv3.</p>
+    </footer>
+  </main>
+
+  <aside class="toc-rail">
+    <nav class="page-toc"><h4>On this page</h4><ul><li class="toc-level-2"><a href="#features">Features</a></li><li class="toc-level-2"><a href="#where-to-go-next">Where to go next</a></li><li class="toc-level-2"><a href="#supported-commands-at-a-glance">Supported commands at a glance</a></li></ul></nav>
+  </aside>
+</div>
+
+<div class="sidebar-scrim" id="sidebarScrim"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>
