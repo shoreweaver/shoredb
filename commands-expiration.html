@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expiration · ShoreDB Docs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B1220'/%3E%3Cpath d='M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3' stroke='%232FB6A6' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="var(--ink)"/>
+      <path d="M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--tide)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M4 24c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--shore)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+    </svg>
+    <span>ShoreDB</span>
+    <span class="brand-sub">docs</span>
+  </a>
+
+  <div class="search-wrap">
+    <input id="searchInput" type="search" placeholder="Search docs…" aria-label="Search documentation" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="searchResults" class="search-results" hidden></div>
+  </div>
+
+  <a class="topbar-link" href="https://github.com/shoreweaver/shoredb" target="_blank" rel="noopener">GitHub ↗</a>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar" aria-label="Sections">
+    <div class="nav-section"><h3>Getting Started</h3><ul><li><a href="index.html">Introduction</a></li><li><a href="quickstart.html">Quick Start</a></li><li><a href="configuration.html">Configuration</a></li></ul></div><div class="nav-section"><h3>Commands</h3><ul><li><a href="commands-strings.html">Strings</a></li><li><a href="commands-lists.html">Lists</a></li><li><a href="commands-sets.html">Sets</a></li><li><a href="commands-hashes.html">Hashes</a></li><li><a href="commands-expiration.html" class="active" aria-current="page">Expiration</a></li><li><a href="commands-pubsub.html">Pub/Sub</a></li><li><a href="commands-admin.html">Admin &amp; Introspection</a></li><li><a href="commands-persistence.html">Persistence</a></li></ul></div><div class="nav-section"><h3>Guides</h3><ul><li><a href="architecture.html">Architecture</a></li><li><a href="embedding.html">Embedding ShoreDB</a></li><li><a href="testing.html">Testing</a></li></ul></div><div class="nav-section"><h3>Reference</h3><ul><li><a href="limitations.html">Known Limitations</a></li></ul></div>
+  </nav>
+
+  <main id="main" class="content">
+    <article class="prose">
+      <h1 id="expiration-commands"><a class="anchor" href="#expiration-commands">#</a>Expiration Commands</h1>
+<p>Commands for setting and inspecting key TTLs. Backed by <code>pkg/commands/expire_commands.go</code>. Expiration applies to keys of any type — string, list, set, or hash.</p>
+<p>Keys are evicted lazily (checked whenever they're accessed) <strong>and</strong> actively: a background sweep runs on a 200ms tick, so an expired key disappears close to on time even if nothing touches it in the meantime.</p>
+<h2 id="expire"><a class="anchor" href="#expire">#</a><code>EXPIRE</code></h2>
+<pre><code>EXPIRE key seconds</code></pre>
+<p>Sets <code>key</code> to expire after <code>seconds</code>. Returns <code>1</code> if the key exists and the TTL was set, <code>0</code> if the key doesn't exist.</p>
+<h2 id="pexpire"><a class="anchor" href="#pexpire">#</a><code>PEXPIRE</code></h2>
+<pre><code>PEXPIRE key milliseconds</code></pre>
+<p>The same as <code>EXPIRE</code>, but with millisecond precision.</p>
+<h2 id="ttl"><a class="anchor" href="#ttl">#</a><code>TTL</code></h2>
+<pre><code>TTL key</code></pre>
+<p>Returns the remaining time to live in seconds:</p>
+<ul><li>a positive number — seconds remaining</li><li><code>-1</code> — the key exists but has no TTL set</li><li><code>-2</code> — the key doesn't exist</li></ul>
+<h2 id="pttl"><a class="anchor" href="#pttl">#</a><code>PTTL</code></h2>
+<pre><code>PTTL key</code></pre>
+<p>The same as <code>TTL</code>, but in milliseconds.</p>
+<h2 id="persist"><a class="anchor" href="#persist">#</a><code>PERSIST</code></h2>
+<pre><code>PERSIST key</code></pre>
+<p>Removes an existing TTL from <code>key</code>, making it persistent again. Returns <code>1</code> if a TTL was removed, <code>0</code> if the key had none (or doesn't exist).</p>
+<h2 id="notes"><a class="anchor" href="#notes">#</a>Notes</h2>
+<ul><li><code>SET</code> and <code>MSET</code> clear any existing TTL on the keys they write.</li><li>TTLs are <strong>not</strong> written to the RDB snapshot, and <code>EXPIRE</code>/<code>PEXPIRE</code>/<code>PERSIST</code> are <strong>not</strong> logged to the AOF — see <a href="limitations.html">Known Limitations</a> for why.</li></ul>
+    </article>
+    <div class="pager"><a class="pager-link pager-prev" href="commands-hashes.html"><span>Previous</span><strong>Hashes</strong></a><a class="pager-link pager-next" href="commands-pubsub.html"><span>Next</span><strong>Pub/Sub</strong></a></div>
+    <footer class="page-footer">
+      <p>ShoreDB is a learning project — see <a href="limitations.html">Known Limitations</a>. Licensed AGPLv3.</p>
+    </footer>
+  </main>
+
+  <aside class="toc-rail">
+    <nav class="page-toc"><h4>On this page</h4><ul><li class="toc-level-2"><a href="#expire"><code>EXPIRE</code></a></li><li class="toc-level-2"><a href="#pexpire"><code>PEXPIRE</code></a></li><li class="toc-level-2"><a href="#ttl"><code>TTL</code></a></li><li class="toc-level-2"><a href="#pttl"><code>PTTL</code></a></li><li class="toc-level-2"><a href="#persist"><code>PERSIST</code></a></li><li class="toc-level-2"><a href="#notes">Notes</a></li></ul></nav>
+  </aside>
+</div>
+
+<div class="sidebar-scrim" id="sidebarScrim"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

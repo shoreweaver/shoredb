@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strings · ShoreDB Docs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B1220'/%3E%3Cpath d='M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3' stroke='%232FB6A6' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="var(--ink)"/>
+      <path d="M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--tide)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M4 24c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--shore)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+    </svg>
+    <span>ShoreDB</span>
+    <span class="brand-sub">docs</span>
+  </a>
+
+  <div class="search-wrap">
+    <input id="searchInput" type="search" placeholder="Search docs…" aria-label="Search documentation" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="searchResults" class="search-results" hidden></div>
+  </div>
+
+  <a class="topbar-link" href="https://github.com/shoreweaver/shoredb" target="_blank" rel="noopener">GitHub ↗</a>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar" aria-label="Sections">
+    <div class="nav-section"><h3>Getting Started</h3><ul><li><a href="index.html">Introduction</a></li><li><a href="quickstart.html">Quick Start</a></li><li><a href="configuration.html">Configuration</a></li></ul></div><div class="nav-section"><h3>Commands</h3><ul><li><a href="commands-strings.html" class="active" aria-current="page">Strings</a></li><li><a href="commands-lists.html">Lists</a></li><li><a href="commands-sets.html">Sets</a></li><li><a href="commands-hashes.html">Hashes</a></li><li><a href="commands-expiration.html">Expiration</a></li><li><a href="commands-pubsub.html">Pub/Sub</a></li><li><a href="commands-admin.html">Admin &amp; Introspection</a></li><li><a href="commands-persistence.html">Persistence</a></li></ul></div><div class="nav-section"><h3>Guides</h3><ul><li><a href="architecture.html">Architecture</a></li><li><a href="embedding.html">Embedding ShoreDB</a></li><li><a href="testing.html">Testing</a></li></ul></div><div class="nav-section"><h3>Reference</h3><ul><li><a href="limitations.html">Known Limitations</a></li></ul></div>
+  </nav>
+
+  <main id="main" class="content">
+    <article class="prose">
+      <h1 id="string-commands"><a class="anchor" href="#string-commands">#</a>String Commands</h1>
+<p>Commands for plain string values and integer counters. Backed by <code>pkg/commands/string_commands.go</code>.</p>
+<h2 id="get"><a class="anchor" href="#get">#</a><code>GET</code></h2>
+<pre><code>GET key</code></pre>
+<p>Returns the value of <code>key</code>, or a nil reply if it doesn't exist (or has expired).</p>
+<h2 id="set"><a class="anchor" href="#set">#</a><code>SET</code></h2>
+<pre><code>SET key value</code></pre>
+<p>Sets <code>key</code> to <code>value</code>, clearing any existing TTL on that key. Always replies <code>OK</code>.</p>
+<h2 id="del"><a class="anchor" href="#del">#</a><code>DEL</code></h2>
+<pre><code>DEL key [key ...]</code></pre>
+<p>Deletes one or more keys, of any type (string, list, set, or hash). Returns the number of keys actually removed.</p>
+<h2 id="exists"><a class="anchor" href="#exists">#</a><code>EXISTS</code></h2>
+<pre><code>EXISTS key [key ...]</code></pre>
+<p>Returns how many of the given keys currently exist, counting duplicates if the same key is passed more than once.</p>
+<h2 id="mset"><a class="anchor" href="#mset">#</a><code>MSET</code></h2>
+<pre><code>MSET key value [key value ...]</code></pre>
+<p>Sets multiple keys to multiple values in one call, clearing any existing TTL on each key touched. Always replies <code>OK</code>.</p>
+<h2 id="mget"><a class="anchor" href="#mget">#</a><code>MGET</code></h2>
+<pre><code>MGET key [key ...]</code></pre>
+<p>Returns the values for the given keys in the same order they were requested. Missing keys come back as nil in their position.</p>
+<h2 id="type"><a class="anchor" href="#type">#</a><code>TYPE</code></h2>
+<pre><code>TYPE key</code></pre>
+<p>Returns the type of the value stored at <code>key</code>: <code>string</code>, <code>list</code>, <code>set</code>, <code>hash</code>, or <code>none</code> if the key doesn't exist.</p>
+<h2 id="incr"><a class="anchor" href="#incr">#</a><code>INCR</code></h2>
+<pre><code>INCR key</code></pre>
+<p>Increments the integer value stored at <code>key</code> by 1. If the key doesn't exist it's treated as <code>0</code> first. Errors if the existing value isn't a valid integer.</p>
+<h2 id="decr"><a class="anchor" href="#decr">#</a><code>DECR</code></h2>
+<pre><code>DECR key</code></pre>
+<p>Decrements the integer value stored at <code>key</code> by 1, with the same missing-key and non-integer behavior as <code>INCR</code>.</p>
+<h2 id="incrby"><a class="anchor" href="#incrby">#</a><code>INCRBY</code></h2>
+<pre><code>INCRBY key increment</code></pre>
+<p>Increments the integer value at <code>key</code> by <code>increment</code> (which may be negative).</p>
+<h2 id="decrby"><a class="anchor" href="#decrby">#</a><code>DECRBY</code></h2>
+<pre><code>DECRBY key decrement</code></pre>
+<p>Decrements the integer value at <code>key</code> by <code>decrement</code> (which may be negative).</p>
+<hr>
+<p>All six counter commands (<code>INCR</code>, <code>DECR</code>, <code>INCRBY</code>, <code>DECRBY</code>) share one code path, so their error message and missing-key behavior are identical: a missing key starts from <code>0</code>, and a non-numeric existing value returns <code>ERR value is not an integer or out of range</code>.</p>
+    </article>
+    <div class="pager"><a class="pager-link pager-prev" href="configuration.html"><span>Previous</span><strong>Configuration</strong></a><a class="pager-link pager-next" href="commands-lists.html"><span>Next</span><strong>Lists</strong></a></div>
+    <footer class="page-footer">
+      <p>ShoreDB is a learning project — see <a href="limitations.html">Known Limitations</a>. Licensed AGPLv3.</p>
+    </footer>
+  </main>
+
+  <aside class="toc-rail">
+    <nav class="page-toc"><h4>On this page</h4><ul><li class="toc-level-2"><a href="#get"><code>GET</code></a></li><li class="toc-level-2"><a href="#set"><code>SET</code></a></li><li class="toc-level-2"><a href="#del"><code>DEL</code></a></li><li class="toc-level-2"><a href="#exists"><code>EXISTS</code></a></li><li class="toc-level-2"><a href="#mset"><code>MSET</code></a></li><li class="toc-level-2"><a href="#mget"><code>MGET</code></a></li><li class="toc-level-2"><a href="#type"><code>TYPE</code></a></li><li class="toc-level-2"><a href="#incr"><code>INCR</code></a></li><li class="toc-level-2"><a href="#decr"><code>DECR</code></a></li><li class="toc-level-2"><a href="#incrby"><code>INCRBY</code></a></li><li class="toc-level-2"><a href="#decrby"><code>DECRBY</code></a></li></ul></nav>
+  </aside>
+</div>
+
+<div class="sidebar-scrim" id="sidebarScrim"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

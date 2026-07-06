@@ -1,0 +1,234 @@
+[
+  {
+    "title": "Introduction",
+    "url": "index.html",
+    "section": "Getting Started",
+    "excerpt": "ShoreDB\n\nShoreDB is a minimal, dependencyfree Redisprotocol server written in Go. Run it as a standalone binary, a Docker container, or an embedded library insi",
+    "headings": [
+      "ShoreDB",
+      "Features",
+      "Where to go next",
+      "Supported commands at a glance"
+    ]
+  },
+  {
+    "title": "Quick Start",
+    "url": "quickstart.html",
+    "section": "Getting Started",
+    "excerpt": "Quick Start\n\nShoreDB can be run three ways. Pick whichever fits your workflow — the command set and behavior are identical across all three.\n\n Run as a binary\n\n",
+    "headings": [
+      "Quick Start",
+      "Run as a binary",
+      "Flags and environment variables",
+      "Run with Docker",
+      "Use as an embedded Go library",
+      "Graceful shutdown",
+      "Next steps"
+    ]
+  },
+  {
+    "title": "Configuration",
+    "url": "configuration.html",
+    "section": "Getting Started",
+    "excerpt": "Configuration\n\nredis.config is a flat key value file, parsed line by line. Lines starting with  are comments and blank lines are ignored.\n\n\n dir <path          ",
+    "headings": [
+      "Configuration",
+      "Keys",
+      "Which persistence mode loads on startup",
+      "`save` — RDB snapshot triggers",
+      "`appendfsync` modes",
+      "`requirepass`"
+    ]
+  },
+  {
+    "title": "Strings",
+    "url": "commands-strings.html",
+    "section": "Commands",
+    "excerpt": "String Commands\n\nCommands for plain string values and integer counters. Backed by pkg/commands/string_commands.go.\n\n GET\n\n\nGET key\n\n\nReturns the value of key, o",
+    "headings": [
+      "String Commands",
+      "`GET`",
+      "`SET`",
+      "`DEL`",
+      "`EXISTS`",
+      "`MSET`",
+      "`MGET`",
+      "`TYPE`",
+      "`INCR`",
+      "`DECR`",
+      "`INCRBY`",
+      "`DECRBY`"
+    ]
+  },
+  {
+    "title": "Lists",
+    "url": "commands-lists.html",
+    "section": "Commands",
+    "excerpt": "List Commands\n\nCommands for ordered, stringvalued lists. Backed by pkg/commands/list_commands.go and pkg/datastruct.\n\n LPUSH\n\n\nLPUSH key value [value ...]\n\n\nPus",
+    "headings": [
+      "List Commands",
+      "`LPUSH`",
+      "`RPUSH`",
+      "`LPOP`",
+      "`RPOP`",
+      "`BLPOP`",
+      "`BRPOP`",
+      "`LRANGE`",
+      "`LLEN`",
+      "`LINDEX`",
+      "`LSET`",
+      "`LREM`"
+    ]
+  },
+  {
+    "title": "Sets",
+    "url": "commands-sets.html",
+    "section": "Commands",
+    "excerpt": "Set Commands\n\nCommands for unordered collections of unique strings. Backed by pkg/commands/set_commands.go and pkg/datastruct.\n\n SADD\n\n\nSADD key member [member ",
+    "headings": [
+      "Set Commands",
+      "`SADD`",
+      "`SREM`",
+      "`SISMEMBER`",
+      "`SMEMBERS`",
+      "`SCARD`",
+      "`SPOP`",
+      "`SINTER`",
+      "`SUNION`",
+      "`SDIFF`"
+    ]
+  },
+  {
+    "title": "Hashes",
+    "url": "commands-hashes.html",
+    "section": "Commands",
+    "excerpt": "Hash Commands\n\nCommands for field/value maps stored under a single key. Backed by pkg/commands/hash_commands.go and pkg/datastruct.\n\n HSET\n\n\nHSET key field valu",
+    "headings": [
+      "Hash Commands",
+      "`HSET`",
+      "`HGET`",
+      "`HDEL`",
+      "`HEXISTS`",
+      "`HGETALL`",
+      "`HKEYS`",
+      "`HVALS`",
+      "`HLEN`",
+      "`HMSET`",
+      "`HMGET`",
+      "`HINCRBY`"
+    ]
+  },
+  {
+    "title": "Expiration",
+    "url": "commands-expiration.html",
+    "section": "Commands",
+    "excerpt": "Expiration Commands\n\nCommands for setting and inspecting key TTLs. Backed by pkg/commands/expire_commands.go. Expiration applies to keys of any type — string, l",
+    "headings": [
+      "Expiration Commands",
+      "`EXPIRE`",
+      "`PEXPIRE`",
+      "`TTL`",
+      "`PTTL`",
+      "`PERSIST`",
+      "Notes"
+    ]
+  },
+  {
+    "title": "Pub/Sub",
+    "url": "commands-pubsub.html",
+    "section": "Commands",
+    "excerpt": "Pub/Sub Commands\n\nChannelbased publish/subscribe, backed by pkg/pubsub. Pub/Sub is global — it is not scoped to whichever logical database a connection has SELE",
+    "headings": [
+      "Pub/Sub Commands",
+      "`PUBLISH`",
+      "`SUBSCRIBE`",
+      "`UNSUBSCRIBE`",
+      "Example session"
+    ]
+  },
+  {
+    "title": "Admin & Introspection",
+    "url": "commands-admin.html",
+    "section": "Commands",
+    "excerpt": "Admin & Introspection Commands\n\nHousekeeping, discovery, and connectionlevel commands. Backed by pkg/commands/admin_commands.go and pkg/server/tcp.go.\n\n KEYS\n\n\n",
+    "headings": [
+      "Admin & Introspection Commands",
+      "`KEYS`",
+      "`SCAN`",
+      "`DBSIZE`",
+      "`HELLO`",
+      "`COMMAND`",
+      "`AUTH`",
+      "`SELECT`"
+    ]
+  },
+  {
+    "title": "Persistence",
+    "url": "commands-persistence.html",
+    "section": "Commands",
+    "excerpt": "Persistence Commands\n\nManual snapshot control, on top of whatever automatic save triggers are configured. Backed by pkg/commands/string_commands.go (handlers) a",
+    "headings": [
+      "Persistence Commands",
+      "`SAVE`",
+      "`BGSAVE`",
+      "`LASTSAVE`",
+      "How a snapshot is taken"
+    ]
+  },
+  {
+    "title": "Architecture",
+    "url": "architecture.html",
+    "section": "Guides",
+    "excerpt": "Architecture\n\nAll packages live under pkg/ and can be imported independently by any Go module — nothing outside cmd/shoredbserver depends on the TCP layer.\n\n\npk",
+    "headings": [
+      "Architecture",
+      "Request flow (TCP server)",
+      "Logical databases",
+      "Blocking list pops",
+      "Persistence: AOF vs RDB",
+      "Where to go next"
+    ]
+  },
+  {
+    "title": "Embedding ShoreDB",
+    "url": "embedding.html",
+    "section": "Guides",
+    "excerpt": "Embedding ShoreDB\n\npkg/shoredis lets another Go program embed ShoreDB directly, inprocess, with no TCP listener and no RESP encoding/decoding overhead.\n\n Creati",
+    "headings": [
+      "Embedding ShoreDB",
+      "Creating a client",
+      "Concurrent goroutines and `Select`",
+      "Typed methods",
+      "The `Do` escape hatch",
+      "Persistence from an embedded client"
+    ]
+  },
+  {
+    "title": "Testing",
+    "url": "testing.html",
+    "section": "Guides",
+    "excerpt": "Testing\n\n Manual smoke test\n\nbash\n./shoredbserver port :6399 config /tmp/testredis.config &\nrediscli p 6399 SET foo bar\nrediscli p 6399 GET foo\nrediscli p 6399 ",
+    "headings": [
+      "Testing",
+      "Manual smoke test",
+      "What to test explicitly when touching persistence code",
+      "Why these three"
+    ]
+  },
+  {
+    "title": "Known Limitations",
+    "url": "limitations.html",
+    "section": "Reference",
+    "excerpt": "Known Limitations\n\nShoreDB is a learning / sideproject implementation, not a dropin Redis replacement. Read this before relying on it for anything productioncri",
+    "headings": [
+      "Known Limitations",
+      "Access control",
+      "`SCAN` is single-pass",
+      "No RESP3",
+      "TTLs don't survive a restart",
+      "`COMMAND` metadata is hand-maintained",
+      "No AOF for embedded clients",
+      "Not covered at all"
+    ]
+  }
+]

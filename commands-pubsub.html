@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pub/Sub · ShoreDB Docs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B1220'/%3E%3Cpath d='M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3' stroke='%232FB6A6' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="var(--ink)"/>
+      <path d="M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--tide)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M4 24c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--shore)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+    </svg>
+    <span>ShoreDB</span>
+    <span class="brand-sub">docs</span>
+  </a>
+
+  <div class="search-wrap">
+    <input id="searchInput" type="search" placeholder="Search docs…" aria-label="Search documentation" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="searchResults" class="search-results" hidden></div>
+  </div>
+
+  <a class="topbar-link" href="https://github.com/shoreweaver/shoredb" target="_blank" rel="noopener">GitHub ↗</a>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar" aria-label="Sections">
+    <div class="nav-section"><h3>Getting Started</h3><ul><li><a href="index.html">Introduction</a></li><li><a href="quickstart.html">Quick Start</a></li><li><a href="configuration.html">Configuration</a></li></ul></div><div class="nav-section"><h3>Commands</h3><ul><li><a href="commands-strings.html">Strings</a></li><li><a href="commands-lists.html">Lists</a></li><li><a href="commands-sets.html">Sets</a></li><li><a href="commands-hashes.html">Hashes</a></li><li><a href="commands-expiration.html">Expiration</a></li><li><a href="commands-pubsub.html" class="active" aria-current="page">Pub/Sub</a></li><li><a href="commands-admin.html">Admin &amp; Introspection</a></li><li><a href="commands-persistence.html">Persistence</a></li></ul></div><div class="nav-section"><h3>Guides</h3><ul><li><a href="architecture.html">Architecture</a></li><li><a href="embedding.html">Embedding ShoreDB</a></li><li><a href="testing.html">Testing</a></li></ul></div><div class="nav-section"><h3>Reference</h3><ul><li><a href="limitations.html">Known Limitations</a></li></ul></div>
+  </nav>
+
+  <main id="main" class="content">
+    <article class="prose">
+      <h1 id="pubsub-commands"><a class="anchor" href="#pubsub-commands">#</a>Pub/Sub Commands</h1>
+<p>Channel-based publish/subscribe, backed by <code>pkg/pubsub</code>. Pub/Sub is <strong>global</strong> — it is not scoped to whichever logical database a connection has <code>SELECT</code>ed, matching real Redis's behavior.</p>
+<h2 id="publish"><a class="anchor" href="#publish">#</a><code>PUBLISH</code></h2>
+<pre><code>PUBLISH channel message</code></pre>
+<p>Delivers <code>message</code> to every current subscriber of <code>channel</code>. Returns the number of subscribers the message was actually delivered to. Each subscriber has a small buffered delivery queue; a subscriber that's fallen behind is skipped for that message rather than blocking the publisher.</p>
+<h2 id="subscribe"><a class="anchor" href="#subscribe">#</a><code>SUBSCRIBE</code></h2>
+<pre><code>SUBSCRIBE channel [channel ...]</code></pre>
+<p>Subscribes the current connection to one or more channels. For each channel, the server replies with a <code>subscribe</code> confirmation message containing the channel name and the connection's total subscription count. Messages published afterward arrive as three-element arrays: <code>[&quot;message&quot;, channel, payload]</code>.</p>
+<h2 id="unsubscribe"><a class="anchor" href="#unsubscribe">#</a><code>UNSUBSCRIBE</code></h2>
+<pre><code>UNSUBSCRIBE [channel ...]</code></pre>
+<p>Unsubscribes from the given channels, or from all currently-subscribed channels if none are given. Replies with one <code>unsubscribe</code> confirmation per channel.</p>
+<h2 id="example-session"><a class="anchor" href="#example-session">#</a>Example session</h2>
+<pre><code data-lang="bash" class="language-bash"># terminal 1
+redis-cli -p 6379 SUBSCRIBE news
+
+# terminal 2
+redis-cli -p 6379 PUBLISH news &quot;hello subscribers&quot;</code></pre>
+<p>Terminal 1 receives the message as soon as it's published — delivery isn't scoped to the publisher's or subscriber's currently-selected database.</p>
+    </article>
+    <div class="pager"><a class="pager-link pager-prev" href="commands-expiration.html"><span>Previous</span><strong>Expiration</strong></a><a class="pager-link pager-next" href="commands-admin.html"><span>Next</span><strong>Admin &amp; Introspection</strong></a></div>
+    <footer class="page-footer">
+      <p>ShoreDB is a learning project — see <a href="limitations.html">Known Limitations</a>. Licensed AGPLv3.</p>
+    </footer>
+  </main>
+
+  <aside class="toc-rail">
+    <nav class="page-toc"><h4>On this page</h4><ul><li class="toc-level-2"><a href="#publish"><code>PUBLISH</code></a></li><li class="toc-level-2"><a href="#subscribe"><code>SUBSCRIBE</code></a></li><li class="toc-level-2"><a href="#unsubscribe"><code>UNSUBSCRIBE</code></a></li><li class="toc-level-2"><a href="#example-session">Example session</a></li></ul></nav>
+  </aside>
+</div>
+
+<div class="sidebar-scrim" id="sidebarScrim"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

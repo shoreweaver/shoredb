@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Embedding ShoreDB · ShoreDB Docs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B1220'/%3E%3Cpath d='M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3' stroke='%232FB6A6' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="var(--ink)"/>
+      <path d="M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--tide)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M4 24c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--shore)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+    </svg>
+    <span>ShoreDB</span>
+    <span class="brand-sub">docs</span>
+  </a>
+
+  <div class="search-wrap">
+    <input id="searchInput" type="search" placeholder="Search docs…" aria-label="Search documentation" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="searchResults" class="search-results" hidden></div>
+  </div>
+
+  <a class="topbar-link" href="https://github.com/shoreweaver/shoredb" target="_blank" rel="noopener">GitHub ↗</a>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar" aria-label="Sections">
+    <div class="nav-section"><h3>Getting Started</h3><ul><li><a href="index.html">Introduction</a></li><li><a href="quickstart.html">Quick Start</a></li><li><a href="configuration.html">Configuration</a></li></ul></div><div class="nav-section"><h3>Commands</h3><ul><li><a href="commands-strings.html">Strings</a></li><li><a href="commands-lists.html">Lists</a></li><li><a href="commands-sets.html">Sets</a></li><li><a href="commands-hashes.html">Hashes</a></li><li><a href="commands-expiration.html">Expiration</a></li><li><a href="commands-pubsub.html">Pub/Sub</a></li><li><a href="commands-admin.html">Admin &amp; Introspection</a></li><li><a href="commands-persistence.html">Persistence</a></li></ul></div><div class="nav-section"><h3>Guides</h3><ul><li><a href="architecture.html">Architecture</a></li><li><a href="embedding.html" class="active" aria-current="page">Embedding ShoreDB</a></li><li><a href="testing.html">Testing</a></li></ul></div><div class="nav-section"><h3>Reference</h3><ul><li><a href="limitations.html">Known Limitations</a></li></ul></div>
+  </nav>
+
+  <main id="main" class="content">
+    <article class="prose">
+      <h1 id="embedding-shoredb"><a class="anchor" href="#embedding-shoredb">#</a>Embedding ShoreDB</h1>
+<p><code>pkg/shoredis</code> lets another Go program embed ShoreDB directly, in-process, with no TCP listener and no RESP encoding/decoding overhead.</p>
+<h2 id="creating-a-client"><a class="anchor" href="#creating-a-client">#</a>Creating a client</h2>
+<pre><code data-lang="go" class="language-go">import &quot;github.com/shoreweaver/shoredb/pkg/shoredis&quot;
+
+client := shoredis.New() // purely in-memory, no persistence</code></pre>
+<p><code>New</code> creates a client with <code>commands.NumDatabases</code> (16) logical databases and no persistence at all. For RDB-backed persistence, use <code>Open</code> with a <code>redis.config</code> path instead:</p>
+<pre><code data-lang="go" class="language-go">client, err := shoredis.Open(&quot;redis.config&quot;)
+defer client.Close() // writes a final snapshot</code></pre>
+<p><code>Open</code> loads any existing snapshot at the configured path immediately, and wires up <code>client.Save()</code> / <code>client.Close()</code> to persist to it. AOF is intentionally <strong>not</strong> available for embedded clients — there's no long-running server loop to drive an fsync ticker — so call <code>Save()</code> explicitly (or rely on <code>Close()</code> on the way out) whenever you want a snapshot.</p>
+<h2 id="concurrent-goroutines-and-select"><a class="anchor" href="#concurrent-goroutines-and-select">#</a>Concurrent goroutines and <code>Select</code></h2>
+<p>A <code>Client</code> is safe for concurrent use by multiple goroutines, with one caveat: <code>Select</code> changes which logical database <em>that</em> <code>Client</code>'s subsequent calls apply to, and that state is shared by whoever holds the same <code>Client</code>. If different goroutines need to work against different databases at the same time, give each its own client with <code>NewFrom</code>, rather than sharing one and calling <code>Select</code> from multiple places:</p>
+<pre><code data-lang="go" class="language-go">client := shoredis.New()
+worker := client.NewFrom() // shares the same underlying databases + persistence
+worker.Select(1)           // only affects worker's own dbIndex</code></pre>
+<h2 id="typed-methods"><a class="anchor" href="#typed-methods">#</a>Typed methods</h2>
+<p>Most commands have a typed convenience method that maps directly onto the RESP command of the same name — for example:</p>
+<pre><code data-lang="go" class="language-go">client.Set(&quot;hello&quot;, &quot;world&quot;)
+value, ok, err := client.Get(&quot;hello&quot;)
+
+client.LPush(&quot;queue&quot;, &quot;a&quot;, &quot;b&quot;)
+items, err := client.LRange(&quot;queue&quot;, 0, -1)
+
+client.HSet(&quot;profile&quot;, &quot;name&quot;, &quot;ada&quot;)
+fields, err := client.HGetAll(&quot;profile&quot;)
+
+client.Expire(&quot;session&quot;, 3600)
+ttl, err := client.TTL(&quot;session&quot;)</code></pre>
+<p>Each typed method returns plain Go types (<code>string</code>, <code>int</code>, <code>bool</code>, <code>[]string</code>, <code>map[string]string</code>) rather than a raw RESP value, and surfaces command errors (like <code>ERR value is not an integer or out of range</code>) through the returned <code>error</code>.</p>
+<h2 id="the-do-escape-hatch"><a class="anchor" href="#the-do-escape-hatch">#</a>The <code>Do</code> escape hatch</h2>
+<p>Anything not covered by a typed method is reachable through <code>Do</code>, which accepts any supported command name (case-insensitive) with string arguments:</p>
+<pre><code data-lang="go" class="language-go">res, err := client.Do(&quot;SISMEMBER&quot;, &quot;tags&quot;, &quot;go&quot;)
+if err == nil &amp;&amp; res.Err() == nil {
+    isMember := res.Int() == 1
+}</code></pre>
+<p><code>Do</code> returns a <code>Result</code> wrapping the raw RESP reply, with accessors:</p>
+<div class="table-wrap"><table><thead><tr><th>Method</th><th>Use for</th></tr></thead><tbody><tr><td><code>Err()</code></td><td>non-nil if the reply was a RESP error</td></tr><tr><td><code>IsNil()</code></td><td>whether the reply was a RESP null</td></tr><tr><td><code>String()</code></td><td>a bulk or simple string reply</td></tr><tr><td><code>Int()</code></td><td>an integer reply</td></tr><tr><td><code>Strings()</code></td><td>an array-of-bulk-strings reply (<code>LRANGE</code>, <code>SMEMBERS</code>, <code>KEYS</code>, ...)</td></tr></tbody></table></div>
+<h2 id="persistence-from-an-embedded-client"><a class="anchor" href="#persistence-from-an-embedded-client">#</a>Persistence from an embedded client</h2>
+<pre><code data-lang="go" class="language-go">client, err := shoredis.Open(&quot;redis.config&quot;)
+if err != nil {
+    // handle: e.g. bad config path
+}
+defer client.Close()
+
+// ... use client ...
+
+if err := client.Save(); err != nil {
+    // only returns an error if the client wasn't created with Open
+}</code></pre>
+<p><code>Save()</code> and <code>Close()</code> both return an error if called on a client created with <code>New()</code>, since there's no persistence configured to write to.</p>
+    </article>
+    <div class="pager"><a class="pager-link pager-prev" href="architecture.html"><span>Previous</span><strong>Architecture</strong></a><a class="pager-link pager-next" href="testing.html"><span>Next</span><strong>Testing</strong></a></div>
+    <footer class="page-footer">
+      <p>ShoreDB is a learning project — see <a href="limitations.html">Known Limitations</a>. Licensed AGPLv3.</p>
+    </footer>
+  </main>
+
+  <aside class="toc-rail">
+    <nav class="page-toc"><h4>On this page</h4><ul><li class="toc-level-2"><a href="#creating-a-client">Creating a client</a></li><li class="toc-level-2"><a href="#concurrent-goroutines-and-select">Concurrent goroutines and <code>Select</code></a></li><li class="toc-level-2"><a href="#typed-methods">Typed methods</a></li><li class="toc-level-2"><a href="#the-do-escape-hatch">The <code>Do</code> escape hatch</a></li><li class="toc-level-2"><a href="#persistence-from-an-embedded-client">Persistence from an embedded client</a></li></ul></nav>
+  </aside>
+</div>
+
+<div class="sidebar-scrim" id="sidebarScrim"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

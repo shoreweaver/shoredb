@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sets · ShoreDB Docs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B1220'/%3E%3Cpath d='M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3' stroke='%232FB6A6' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="var(--ink)"/>
+      <path d="M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--tide)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M4 24c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--shore)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+    </svg>
+    <span>ShoreDB</span>
+    <span class="brand-sub">docs</span>
+  </a>
+
+  <div class="search-wrap">
+    <input id="searchInput" type="search" placeholder="Search docs…" aria-label="Search documentation" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="searchResults" class="search-results" hidden></div>
+  </div>
+
+  <a class="topbar-link" href="https://github.com/shoreweaver/shoredb" target="_blank" rel="noopener">GitHub ↗</a>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar" aria-label="Sections">
+    <div class="nav-section"><h3>Getting Started</h3><ul><li><a href="index.html">Introduction</a></li><li><a href="quickstart.html">Quick Start</a></li><li><a href="configuration.html">Configuration</a></li></ul></div><div class="nav-section"><h3>Commands</h3><ul><li><a href="commands-strings.html">Strings</a></li><li><a href="commands-lists.html">Lists</a></li><li><a href="commands-sets.html" class="active" aria-current="page">Sets</a></li><li><a href="commands-hashes.html">Hashes</a></li><li><a href="commands-expiration.html">Expiration</a></li><li><a href="commands-pubsub.html">Pub/Sub</a></li><li><a href="commands-admin.html">Admin &amp; Introspection</a></li><li><a href="commands-persistence.html">Persistence</a></li></ul></div><div class="nav-section"><h3>Guides</h3><ul><li><a href="architecture.html">Architecture</a></li><li><a href="embedding.html">Embedding ShoreDB</a></li><li><a href="testing.html">Testing</a></li></ul></div><div class="nav-section"><h3>Reference</h3><ul><li><a href="limitations.html">Known Limitations</a></li></ul></div>
+  </nav>
+
+  <main id="main" class="content">
+    <article class="prose">
+      <h1 id="set-commands"><a class="anchor" href="#set-commands">#</a>Set Commands</h1>
+<p>Commands for unordered collections of unique strings. Backed by <code>pkg/commands/set_commands.go</code> and <code>pkg/datastruct</code>.</p>
+<h2 id="sadd"><a class="anchor" href="#sadd">#</a><code>SADD</code></h2>
+<pre><code>SADD key member [member ...]</code></pre>
+<p>Adds one or more members to the set at <code>key</code>, creating it if needed. Returns the number of members actually added (duplicates already present don't count).</p>
+<h2 id="srem"><a class="anchor" href="#srem">#</a><code>SREM</code></h2>
+<pre><code>SREM key member [member ...]</code></pre>
+<p>Removes one or more members from the set. Returns the number actually removed. The key is deleted entirely once the set becomes empty.</p>
+<h2 id="sismember"><a class="anchor" href="#sismember">#</a><code>SISMEMBER</code></h2>
+<pre><code>SISMEMBER key member</code></pre>
+<p>Returns <code>1</code> if <code>member</code> is in the set, <code>0</code> otherwise (including when the key doesn't exist).</p>
+<h2 id="smembers"><a class="anchor" href="#smembers">#</a><code>SMEMBERS</code></h2>
+<pre><code>SMEMBERS key</code></pre>
+<p>Returns all members of the set in unspecified order, or an empty array if the key doesn't exist.</p>
+<h2 id="scard"><a class="anchor" href="#scard">#</a><code>SCARD</code></h2>
+<pre><code>SCARD key</code></pre>
+<p>Returns the number of members in the set, or <code>0</code> if it doesn't exist.</p>
+<h2 id="spop"><a class="anchor" href="#spop">#</a><code>SPOP</code></h2>
+<pre><code>SPOP key</code></pre>
+<p>Removes and returns one random member from the set, or nil if it's empty or missing. The key is deleted entirely once the set becomes empty.</p>
+<h2 id="sinter"><a class="anchor" href="#sinter">#</a><code>SINTER</code></h2>
+<pre><code>SINTER key [key ...]</code></pre>
+<p>Returns the intersection of all given sets — members present in every one. Returns an empty array immediately if any key is missing.</p>
+<h2 id="sunion"><a class="anchor" href="#sunion">#</a><code>SUNION</code></h2>
+<pre><code>SUNION key [key ...]</code></pre>
+<p>Returns the union of all given sets. Missing keys are simply treated as empty sets rather than short-circuiting the result.</p>
+<h2 id="sdiff"><a class="anchor" href="#sdiff">#</a><code>SDIFF</code></h2>
+<pre><code>SDIFF key [key ...]</code></pre>
+<p>Returns the members of the first set that are <strong>not</strong> present in any of the subsequent sets. Returns an empty array immediately if the first key is missing; later missing keys are treated as empty.</p>
+    </article>
+    <div class="pager"><a class="pager-link pager-prev" href="commands-lists.html"><span>Previous</span><strong>Lists</strong></a><a class="pager-link pager-next" href="commands-hashes.html"><span>Next</span><strong>Hashes</strong></a></div>
+    <footer class="page-footer">
+      <p>ShoreDB is a learning project — see <a href="limitations.html">Known Limitations</a>. Licensed AGPLv3.</p>
+    </footer>
+  </main>
+
+  <aside class="toc-rail">
+    <nav class="page-toc"><h4>On this page</h4><ul><li class="toc-level-2"><a href="#sadd"><code>SADD</code></a></li><li class="toc-level-2"><a href="#srem"><code>SREM</code></a></li><li class="toc-level-2"><a href="#sismember"><code>SISMEMBER</code></a></li><li class="toc-level-2"><a href="#smembers"><code>SMEMBERS</code></a></li><li class="toc-level-2"><a href="#scard"><code>SCARD</code></a></li><li class="toc-level-2"><a href="#spop"><code>SPOP</code></a></li><li class="toc-level-2"><a href="#sinter"><code>SINTER</code></a></li><li class="toc-level-2"><a href="#sunion"><code>SUNION</code></a></li><li class="toc-level-2"><a href="#sdiff"><code>SDIFF</code></a></li></ul></nav>
+  </aside>
+</div>
+
+<div class="sidebar-scrim" id="sidebarScrim"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

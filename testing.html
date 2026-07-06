@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Testing · ShoreDB Docs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B1220'/%3E%3Cpath d='M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3' stroke='%232FB6A6' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="var(--ink)"/>
+      <path d="M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--tide)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M4 24c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--shore)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+    </svg>
+    <span>ShoreDB</span>
+    <span class="brand-sub">docs</span>
+  </a>
+
+  <div class="search-wrap">
+    <input id="searchInput" type="search" placeholder="Search docs…" aria-label="Search documentation" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="searchResults" class="search-results" hidden></div>
+  </div>
+
+  <a class="topbar-link" href="https://github.com/shoreweaver/shoredb" target="_blank" rel="noopener">GitHub ↗</a>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar" aria-label="Sections">
+    <div class="nav-section"><h3>Getting Started</h3><ul><li><a href="index.html">Introduction</a></li><li><a href="quickstart.html">Quick Start</a></li><li><a href="configuration.html">Configuration</a></li></ul></div><div class="nav-section"><h3>Commands</h3><ul><li><a href="commands-strings.html">Strings</a></li><li><a href="commands-lists.html">Lists</a></li><li><a href="commands-sets.html">Sets</a></li><li><a href="commands-hashes.html">Hashes</a></li><li><a href="commands-expiration.html">Expiration</a></li><li><a href="commands-pubsub.html">Pub/Sub</a></li><li><a href="commands-admin.html">Admin &amp; Introspection</a></li><li><a href="commands-persistence.html">Persistence</a></li></ul></div><div class="nav-section"><h3>Guides</h3><ul><li><a href="architecture.html">Architecture</a></li><li><a href="embedding.html">Embedding ShoreDB</a></li><li><a href="testing.html" class="active" aria-current="page">Testing</a></li></ul></div><div class="nav-section"><h3>Reference</h3><ul><li><a href="limitations.html">Known Limitations</a></li></ul></div>
+  </nav>
+
+  <main id="main" class="content">
+    <article class="prose">
+      <h1 id="testing"><a class="anchor" href="#testing">#</a>Testing</h1>
+<h2 id="manual-smoke-test"><a class="anchor" href="#manual-smoke-test">#</a>Manual smoke test</h2>
+<pre><code data-lang="bash" class="language-bash">./shoredb-server -port :6399 -config /tmp/test-redis.config &amp;
+redis-cli -p 6399 SET foo bar
+redis-cli -p 6399 GET foo
+redis-cli -p 6399 SHUTDOWN NOSAVE 2&gt;/dev/null; kill %1</code></pre>
+<h2 id="what-to-test-explicitly-when-touching-persistence-code"><a class="anchor" href="#what-to-test-explicitly-when-touching-persistence-code">#</a>What to test explicitly when touching persistence code</h2>
+<p><strong>RDB round-trip.</strong> With <code>appendonly no</code>, push data into a list, a set, and a hash on a couple of different <code>SELECT</code>ed databases, then <code>SAVE</code>, restart the server, and confirm each database's data is still there under the right index.</p>
+<pre><code data-lang="bash" class="language-bash">redis-cli -p 6399 -n 0 RPUSH queue a b c
+redis-cli -p 6399 -n 2 SADD tags go redis
+redis-cli -p 6399 SAVE
+# restart the server, then:
+redis-cli -p 6399 -n 0 LRANGE queue 0 -1
+redis-cli -p 6399 -n 2 SMEMBERS tags</code></pre>
+<p><strong>AOF durability.</strong> With <code>appendonly yes</code> (the default <code>redis.config</code>), <code>INCR</code> a counter a few times — optionally after a <code>SELECT</code> — then restart with a <strong>graceful</strong> shutdown (<code>SIGTERM</code>, not <code>-9</code>), and confirm the value survived in the correct database.</p>
+<pre><code data-lang="bash" class="language-bash">redis-cli -p 6399 -n 1 INCR visits
+redis-cli -p 6399 -n 1 INCR visits
+kill -TERM %1   # graceful; a -9 kill skips the final flush
+# restart the server, then:
+redis-cli -p 6399 -n 1 GET visits</code></pre>
+<p><strong><code>BLPOP</code>/<code>BRPOP</code> latency.</strong> A blocked <code>BLPOP</code> should return within roughly a millisecond of a matching <code>LPUSH</code>/<code>RPUSH</code>, not up to 50ms later (the old busy-wait interval). Time it from two terminals:</p>
+<pre><code data-lang="bash" class="language-bash"># terminal 1
+time redis-cli -p 6399 BLPOP jobs 5
+
+# terminal 2, started right after
+redis-cli -p 6399 LPUSH jobs &quot;a job&quot;</code></pre>
+<h2 id="why-these-three"><a class="anchor" href="#why-these-three">#</a>Why these three</h2>
+<p>These three areas are exactly where the surrounding logic is easiest to get subtly wrong: per-database locking in the RDB writer, <code>SELECT</code>-tagging in the AOF, and the switch from polling to a condition variable for blocking pops. See <a href="architecture.html">Architecture</a> for how each of those actually works.</p>
+    </article>
+    <div class="pager"><a class="pager-link pager-prev" href="embedding.html"><span>Previous</span><strong>Embedding ShoreDB</strong></a><a class="pager-link pager-next" href="limitations.html"><span>Next</span><strong>Known Limitations</strong></a></div>
+    <footer class="page-footer">
+      <p>ShoreDB is a learning project — see <a href="limitations.html">Known Limitations</a>. Licensed AGPLv3.</p>
+    </footer>
+  </main>
+
+  <aside class="toc-rail">
+    <nav class="page-toc"><h4>On this page</h4><ul><li class="toc-level-2"><a href="#manual-smoke-test">Manual smoke test</a></li><li class="toc-level-2"><a href="#what-to-test-explicitly-when-touching-persistence-code">What to test explicitly when touching persistence code</a></li><li class="toc-level-2"><a href="#why-these-three">Why these three</a></li></ul></nav>
+  </aside>
+</div>
+
+<div class="sidebar-scrim" id="sidebarScrim"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Architecture · ShoreDB Docs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B1220'/%3E%3Cpath d='M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3' stroke='%232FB6A6' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="var(--ink)"/>
+      <path d="M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--tide)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M4 24c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--shore)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+    </svg>
+    <span>ShoreDB</span>
+    <span class="brand-sub">docs</span>
+  </a>
+
+  <div class="search-wrap">
+    <input id="searchInput" type="search" placeholder="Search docs…" aria-label="Search documentation" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="searchResults" class="search-results" hidden></div>
+  </div>
+
+  <a class="topbar-link" href="https://github.com/shoreweaver/shoredb" target="_blank" rel="noopener">GitHub ↗</a>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar" aria-label="Sections">
+    <div class="nav-section"><h3>Getting Started</h3><ul><li><a href="index.html">Introduction</a></li><li><a href="quickstart.html">Quick Start</a></li><li><a href="configuration.html">Configuration</a></li></ul></div><div class="nav-section"><h3>Commands</h3><ul><li><a href="commands-strings.html">Strings</a></li><li><a href="commands-lists.html">Lists</a></li><li><a href="commands-sets.html">Sets</a></li><li><a href="commands-hashes.html">Hashes</a></li><li><a href="commands-expiration.html">Expiration</a></li><li><a href="commands-pubsub.html">Pub/Sub</a></li><li><a href="commands-admin.html">Admin &amp; Introspection</a></li><li><a href="commands-persistence.html">Persistence</a></li></ul></div><div class="nav-section"><h3>Guides</h3><ul><li><a href="architecture.html" class="active" aria-current="page">Architecture</a></li><li><a href="embedding.html">Embedding ShoreDB</a></li><li><a href="testing.html">Testing</a></li></ul></div><div class="nav-section"><h3>Reference</h3><ul><li><a href="limitations.html">Known Limitations</a></li></ul></div>
+  </nav>
+
+  <main id="main" class="content">
+    <article class="prose">
+      <h1 id="architecture"><a class="anchor" href="#architecture">#</a>Architecture</h1>
+<p>All packages live under <code>pkg/</code> and can be imported independently by any Go module — nothing outside <code>cmd/shoredb-server</code> depends on the TCP layer.</p>
+<pre><code>pkg/resp          RESP2 parser + writer
+pkg/datastruct    List / Set / Hash implementations (thread-safe)
+pkg/pubsub        Channel-based pub/sub broker
+pkg/persistence   AOF + RDB-style snapshotting, multi-database aware
+pkg/commands      Command handlers + the Database/MultiDB types (16 logical databases)
+pkg/server        TCP server that wires the above together, with per-connection SELECT
+pkg/shoredis       Embeddable in-process client with typed methods and no TCP/RESP overhead</code></pre>
+<p><code>cmd/shoredb-server</code> is a thin binary wrapper around <code>pkg/server</code>.</p>
+<h2 id="request-flow-tcp-server"><a class="anchor" href="#request-flow-tcp-server">#</a>Request flow (TCP server)</h2>
+<ol><li><code>pkg/server.Start</code> accepts a connection and hands it to <code>handleConnection</code> on its own goroutine.</li><li>Each connection parses RESP values off the wire with <code>pkg/resp.Parser</code> and tracks its <strong>own</strong> <code>dbIndex</code> — <code>SELECT</code> only ever affects that one connection.</li><li><code>AUTH</code> and <code>SELECT</code> are handled inline; everything else is dispatched through <code>processCommand</code>, which looks the command up in <code>commands.CommandHandlers</code> (or <code>commands.RDBCommandHandlers</code> for <code>SAVE</code>/<code>BGSAVE</code>/<code>LASTSAVE</code>, which additionally need the <code>*persistence.RDB</code> handle).</li><li>The handler runs <strong>before</strong> anything is persisted: a command that fails argument validation or otherwise errors is never written to the AOF, so replay never sees a bad entry.</li><li>On a successful, mutating command, the original RESP value is appended to the AOF (tagged with the connection's <code>dbIndex</code>) and the RDB change counter is incremented.</li></ol>
+<h2 id="logical-databases"><a class="anchor" href="#logical-databases">#</a>Logical databases</h2>
+<p><code>commands.MultiDB</code> holds <code>NumDatabases</code> (16) <code>*Database</code> values, each with its <strong>own mutex</strong>, plus one <code>*pubsub.PubSub</code> broker shared across all of them. This split matters for two reasons:</p>
+<ul><li>A snapshot walk or heavy workload on one logical database never blocks operations on another — earlier revisions used a single lock across every database, which meant an RDB save on database 3 stalled traffic on database 0 too.</li><li>Pub/Sub is deliberately <strong>not</strong> duplicated per database: <code>PUBLISH</code>/<code>SUBSCRIBE</code> are global in real Redis, and ShoreDB matches that by sharing one broker across the whole <code>MultiDB</code>.</li></ul>
+<h2 id="blocking-list-pops"><a class="anchor" href="#blocking-list-pops">#</a>Blocking list pops</h2>
+<p><code>BLPOP</code>/<code>BRPOP</code> used to busy-wait with a fixed <code>time.Sleep</code> loop, so a pop sitting ready could go unnoticed for up to the sleep interval. Each <code>Database</code> now owns a <code>sync.Cond</code> (<code>listCond</code>) that every <code>LPUSH</code>/<code>RPUSH</code> broadcasts on. A blocked popper parks on that condition variable and wakes immediately when data arrives — or, if a timeout was given, a <code>time.AfterFunc</code> broadcasts once the deadline passes so the popper can give up cleanly.</p>
+<h2 id="persistence-aof-vs-rdb"><a class="anchor" href="#persistence-aof-vs-rdb">#</a>Persistence: AOF vs RDB</h2>
+<p><code>pkg/persistence</code> avoids depending on <code>pkg/commands</code> directly (which would create an import cycle), and instead defines small structural interfaces — <code>Database</code> and <code>MultiDatabase</code> — that <code>commands.Database</code>/<code>commands.MultiDB</code> satisfy without ever importing this package. The same interface-boxing pattern is used for the <code>GetOrCreate{List,Set,Hash}Iface</code> methods, so RDB load/save code can get-or-create containers without a concrete-type dependency.</p>
+<ul><li><strong>AOF</strong> (<code>pkg/persistence/aof.go</code>) appends every successful mutating command to a log file, prefixing a <code>SELECT</code> pseudo-entry whenever the target database changes from the previous write. Replaying the log re-applies each command against the right database.</li><li><strong>RDB</strong> (<code>pkg/persistence/rdb.go</code>) walks all 16 databases and writes a compact binary snapshot — one <code>SELECTDB</code> marker and a resize hint per non-empty database, followed by its keys. Loading reverses this exactly.</li></ul>
+<p>If <code>appendonly yes</code>, the AOF is authoritative on startup and takes precedence over any RDB file; otherwise the RDB snapshot is loaded. Both cover all 16 databases.</p>
+<h2 id="where-to-go-next"><a class="anchor" href="#where-to-go-next">#</a>Where to go next</h2>
+<ul><li><a href="configuration.html">Configuration</a> for every <code>redis.config</code> key</li><li><a href="embedding.html">Embedding ShoreDB</a> to use these packages directly from another Go program</li><li><a href="testing.html">Testing</a> for what to exercise manually when touching persistence code</li></ul>
+    </article>
+    <div class="pager"><a class="pager-link pager-prev" href="commands-persistence.html"><span>Previous</span><strong>Persistence</strong></a><a class="pager-link pager-next" href="embedding.html"><span>Next</span><strong>Embedding ShoreDB</strong></a></div>
+    <footer class="page-footer">
+      <p>ShoreDB is a learning project — see <a href="limitations.html">Known Limitations</a>. Licensed AGPLv3.</p>
+    </footer>
+  </main>
+
+  <aside class="toc-rail">
+    <nav class="page-toc"><h4>On this page</h4><ul><li class="toc-level-2"><a href="#request-flow-tcp-server">Request flow (TCP server)</a></li><li class="toc-level-2"><a href="#logical-databases">Logical databases</a></li><li class="toc-level-2"><a href="#blocking-list-pops">Blocking list pops</a></li><li class="toc-level-2"><a href="#persistence-aof-vs-rdb">Persistence: AOF vs RDB</a></li><li class="toc-level-2"><a href="#where-to-go-next">Where to go next</a></li></ul></nav>
+  </aside>
+</div>
+
+<div class="sidebar-scrim" id="sidebarScrim"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Persistence · ShoreDB Docs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B1220'/%3E%3Cpath d='M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3' stroke='%232FB6A6' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="var(--ink)"/>
+      <path d="M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--tide)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M4 24c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--shore)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+    </svg>
+    <span>ShoreDB</span>
+    <span class="brand-sub">docs</span>
+  </a>
+
+  <div class="search-wrap">
+    <input id="searchInput" type="search" placeholder="Search docs…" aria-label="Search documentation" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="searchResults" class="search-results" hidden></div>
+  </div>
+
+  <a class="topbar-link" href="https://github.com/shoreweaver/shoredb" target="_blank" rel="noopener">GitHub ↗</a>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar" aria-label="Sections">
+    <div class="nav-section"><h3>Getting Started</h3><ul><li><a href="index.html">Introduction</a></li><li><a href="quickstart.html">Quick Start</a></li><li><a href="configuration.html">Configuration</a></li></ul></div><div class="nav-section"><h3>Commands</h3><ul><li><a href="commands-strings.html">Strings</a></li><li><a href="commands-lists.html">Lists</a></li><li><a href="commands-sets.html">Sets</a></li><li><a href="commands-hashes.html">Hashes</a></li><li><a href="commands-expiration.html">Expiration</a></li><li><a href="commands-pubsub.html">Pub/Sub</a></li><li><a href="commands-admin.html">Admin &amp; Introspection</a></li><li><a href="commands-persistence.html" class="active" aria-current="page">Persistence</a></li></ul></div><div class="nav-section"><h3>Guides</h3><ul><li><a href="architecture.html">Architecture</a></li><li><a href="embedding.html">Embedding ShoreDB</a></li><li><a href="testing.html">Testing</a></li></ul></div><div class="nav-section"><h3>Reference</h3><ul><li><a href="limitations.html">Known Limitations</a></li></ul></div>
+  </nav>
+
+  <main id="main" class="content">
+    <article class="prose">
+      <h1 id="persistence-commands"><a class="anchor" href="#persistence-commands">#</a>Persistence Commands</h1>
+<p>Manual snapshot control, on top of whatever automatic <code>save</code> triggers are configured. Backed by <code>pkg/commands/string_commands.go</code> (handlers) and <code>pkg/persistence</code> (the RDB engine). See <a href="configuration.html">Configuration</a> for the config keys that control persistence, and <a href="architecture.html">Architecture</a> for how snapshotting is scoped per logical database.</p>
+<p>These commands require an RDB handler to be configured; if none is available, each replies <code>ERR RDB not configured</code>.</p>
+<h2 id="save"><a class="anchor" href="#save">#</a><code>SAVE</code></h2>
+<pre><code>SAVE</code></pre>
+<p>Performs an RDB snapshot <strong>synchronously</strong>, blocking until the write completes. Replies <code>OK</code> on success.</p>
+<h2 id="bgsave"><a class="anchor" href="#bgsave">#</a><code>BGSAVE</code></h2>
+<pre><code>BGSAVE</code></pre>
+<p>Kicks off the same snapshot in a background goroutine and returns immediately with <code>Background saving started</code>, without waiting for it to finish.</p>
+<h2 id="lastsave"><a class="anchor" href="#lastsave">#</a><code>LASTSAVE</code></h2>
+<pre><code>LASTSAVE</code></pre>
+<p>Returns the Unix timestamp of the most recent successful snapshot.</p>
+<h2 id="how-a-snapshot-is-taken"><a class="anchor" href="#how-a-snapshot-is-taken">#</a>How a snapshot is taken</h2>
+<p>Each of the 16 logical databases is walked and written independently, holding only that database's own read lock for the duration of its own walk. A snapshot of database 3 does not stall reads or writes against database 0. The snapshot is written to a temporary file first and only <code>rename</code>d into place after a successful flush and <code>fsync</code>, so a crash mid-save can't corrupt the existing on-disk snapshot.</p>
+<p>Note that <strong>TTLs are not included</strong> in the snapshot — see <a href="limitations.html">Known Limitations</a>.</p>
+    </article>
+    <div class="pager"><a class="pager-link pager-prev" href="commands-admin.html"><span>Previous</span><strong>Admin &amp; Introspection</strong></a><a class="pager-link pager-next" href="architecture.html"><span>Next</span><strong>Architecture</strong></a></div>
+    <footer class="page-footer">
+      <p>ShoreDB is a learning project — see <a href="limitations.html">Known Limitations</a>. Licensed AGPLv3.</p>
+    </footer>
+  </main>
+
+  <aside class="toc-rail">
+    <nav class="page-toc"><h4>On this page</h4><ul><li class="toc-level-2"><a href="#save"><code>SAVE</code></a></li><li class="toc-level-2"><a href="#bgsave"><code>BGSAVE</code></a></li><li class="toc-level-2"><a href="#lastsave"><code>LASTSAVE</code></a></li><li class="toc-level-2"><a href="#how-a-snapshot-is-taken">How a snapshot is taken</a></li></ul></nav>
+  </aside>
+</div>
+
+<div class="sidebar-scrim" id="sidebarScrim"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

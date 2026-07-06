@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick Start · ShoreDB Docs</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B1220'/%3E%3Cpath d='M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3' stroke='%232FB6A6' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="">
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="var(--ink)"/>
+      <path d="M4 20c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--tide)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M4 24c3-3 6 3 9 0s6-3 9 0 6 3 6 3" stroke="var(--shore)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+    </svg>
+    <span>ShoreDB</span>
+    <span class="brand-sub">docs</span>
+  </a>
+
+  <div class="search-wrap">
+    <input id="searchInput" type="search" placeholder="Search docs…" aria-label="Search documentation" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="searchResults" class="search-results" hidden></div>
+  </div>
+
+  <a class="topbar-link" href="https://github.com/shoreweaver/shoredb" target="_blank" rel="noopener">GitHub ↗</a>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar" aria-label="Sections">
+    <div class="nav-section"><h3>Getting Started</h3><ul><li><a href="index.html">Introduction</a></li><li><a href="quickstart.html" class="active" aria-current="page">Quick Start</a></li><li><a href="configuration.html">Configuration</a></li></ul></div><div class="nav-section"><h3>Commands</h3><ul><li><a href="commands-strings.html">Strings</a></li><li><a href="commands-lists.html">Lists</a></li><li><a href="commands-sets.html">Sets</a></li><li><a href="commands-hashes.html">Hashes</a></li><li><a href="commands-expiration.html">Expiration</a></li><li><a href="commands-pubsub.html">Pub/Sub</a></li><li><a href="commands-admin.html">Admin &amp; Introspection</a></li><li><a href="commands-persistence.html">Persistence</a></li></ul></div><div class="nav-section"><h3>Guides</h3><ul><li><a href="architecture.html">Architecture</a></li><li><a href="embedding.html">Embedding ShoreDB</a></li><li><a href="testing.html">Testing</a></li></ul></div><div class="nav-section"><h3>Reference</h3><ul><li><a href="limitations.html">Known Limitations</a></li></ul></div>
+  </nav>
+
+  <main id="main" class="content">
+    <article class="prose">
+      <h1 id="quick-start"><a class="anchor" href="#quick-start">#</a>Quick Start</h1>
+<p>ShoreDB can be run three ways. Pick whichever fits your workflow — the command set and behavior are identical across all three.</p>
+<h2 id="run-as-a-binary"><a class="anchor" href="#run-as-a-binary">#</a>Run as a binary</h2>
+<pre><code data-lang="bash" class="language-bash">git clone https://github.com/shoreweaver/shoredb.git
+cd shoredb
+go build -o shoredb-server ./cmd/shoredb-server
+./shoredb-server -port :6379 -config redis.config</code></pre>
+<p>Or configure it with environment variables instead of flags:</p>
+<pre><code data-lang="bash" class="language-bash">SHOREDB_PORT=:6379 SHOREDB_CONFIG=redis.config ./shoredb-server</code></pre>
+<p>Then, from another terminal, talk to it with any Redis client:</p>
+<pre><code data-lang="bash" class="language-bash">redis-cli -p 6379 SET hello world
+redis-cli -p 6379 GET hello
+redis-cli -p 6379 -n 1 SET hello elsewhere   # a different logical database
+redis-cli -p 6379 -n 1 GET hello</code></pre>
+<h3 id="flags-and-environment-variables"><a class="anchor" href="#flags-and-environment-variables">#</a>Flags and environment variables</h3>
+<div class="table-wrap"><table><thead><tr><th>Flag</th><th>Env var</th><th>Meaning</th><th>Default</th></tr></thead><tbody><tr><td><code>-port</code></td><td><code>SHOREDB_PORT</code></td><td>Address to listen on</td><td><code>:6379</code></td></tr><tr><td><code>-config</code></td><td><code>SHOREDB_CONFIG</code></td><td>Path to a <code>redis.config</code> file</td><td><code>redis.config</code></td></tr></tbody></table></div>
+<p>Flags take priority over environment variables, which take priority over the built-in defaults.</p>
+<h2 id="run-with-docker"><a class="anchor" href="#run-with-docker">#</a>Run with Docker</h2>
+<pre><code data-lang="bash" class="language-bash">docker compose up --build</code></pre>
+<p>This builds the image and exposes port <code>6379</code>, persisting data to a named Docker volume so it survives container restarts. See <code>docker-compose.yml</code> for the exact mount and env var setup, and make sure a <code>redis.config</code> is available at the path <code>SHOREDB_CONFIG</code> points to inside the container — bake it into the image, or copy it into the volume once.</p>
+<pre><code data-lang="yaml" class="language-yaml">services:
+  shoredb:
+    build: .
+    ports:
+      - &quot;6379:6379&quot;
+    volumes:
+      - shoredb-data:/data
+    environment:
+      - SHOREDB_PORT=:6379
+      - SHOREDB_CONFIG=/data/redis.config
+
+volumes:
+  shoredb-data:</code></pre>
+<h2 id="use-as-an-embedded-go-library"><a class="anchor" href="#use-as-an-embedded-go-library">#</a>Use as an embedded Go library</h2>
+<pre><code data-lang="go" class="language-go">import &quot;github.com/shoreweaver/shoredb/pkg/shoredis&quot;
+
+client := shoredis.New() // in-memory only, no persistence
+
+client.Set(&quot;hello&quot;, &quot;world&quot;)
+value, ok, _ := client.Get(&quot;hello&quot;)
+
+client.Select(1)            // switch to logical database 1
+client.LPush(&quot;queue&quot;, &quot;a&quot;, &quot;b&quot;)
+client.HGetAll(&quot;some-hash&quot;)
+
+// Or, with RDB persistence backed by a redis.config file:
+client, err := shoredis.Open(&quot;redis.config&quot;)
+defer client.Close() // writes a final snapshot</code></pre>
+<p>See <a href="embedding.html">Embedding ShoreDB</a> for the full typed API and the <code>Do</code> escape hatch for less-common commands.</p>
+<h2 id="graceful-shutdown"><a class="anchor" href="#graceful-shutdown">#</a>Graceful shutdown</h2>
+<p>Sending <code>SIGINT</code> or <code>SIGTERM</code> (e.g. <code>Ctrl-C</code>, or <code>kill</code> without <code>-9</code>) triggers a clean shutdown: the AOF is closed and a final RDB snapshot is written before the process exits. Killing the process with <code>-9</code> skips this, so prefer a graceful stop whenever you need the on-disk state to be current.</p>
+<h2 id="next-steps"><a class="anchor" href="#next-steps">#</a>Next steps</h2>
+<ul><li><a href="configuration.html">Configuration</a> to set up persistence and <code>requirepass</code></li><li><a href="commands-strings.html">Commands</a> for the full reference</li></ul>
+    </article>
+    <div class="pager"><a class="pager-link pager-prev" href="index.html"><span>Previous</span><strong>Introduction</strong></a><a class="pager-link pager-next" href="configuration.html"><span>Next</span><strong>Configuration</strong></a></div>
+    <footer class="page-footer">
+      <p>ShoreDB is a learning project — see <a href="limitations.html">Known Limitations</a>. Licensed AGPLv3.</p>
+    </footer>
+  </main>
+
+  <aside class="toc-rail">
+    <nav class="page-toc"><h4>On this page</h4><ul><li class="toc-level-2"><a href="#run-as-a-binary">Run as a binary</a></li><li class="toc-level-3"><a href="#flags-and-environment-variables">Flags and environment variables</a></li><li class="toc-level-2"><a href="#run-with-docker">Run with Docker</a></li><li class="toc-level-2"><a href="#use-as-an-embedded-go-library">Use as an embedded Go library</a></li><li class="toc-level-2"><a href="#graceful-shutdown">Graceful shutdown</a></li><li class="toc-level-2"><a href="#next-steps">Next steps</a></li></ul></nav>
+  </aside>
+</div>
+
+<div class="sidebar-scrim" id="sidebarScrim"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>
