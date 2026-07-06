@@ -1,0 +1,13 @@
+services:
+  shoredb:
+    build: .
+    ports:
+      - "6379:6379"
+    volumes:
+      - shoredb-data:/data
+    environment:
+      - SHOREDB_PORT=:6379
+      - SHOREDB_CONFIG=/data/redis.config
+
+volumes:
+  shoredb-data:
